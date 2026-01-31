@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-main.py
-App RRHH Alvatross - Módulos: candidatos, vacantes, evaluaciones R/S/T
-Stack: TM Forum, ODA, OSS/BSS, Java/Spring, Kubernetes
+TalentFlow IT - Plataforma Integral de Selección y Recruiting para Perfiles IT/Telecom
+Stack: OSS/BSS, APIs estándar, Java/Spring, Kubernetes, Cloud Native
+⚠️  Ejecuta este archivo único. No requiere dependencias externas.
 """
 
 import sqlite3
@@ -14,7 +14,7 @@ import sys
 
 
 # ========================================
-# CONFIGURACIÓN GLOBAL
+# CONFIGURACIÓN GLOBAL - NOMBRE APP: TalentFlow IT
 # ========================================
 
 PERFILES_IT = {
@@ -38,12 +38,12 @@ SENIORITY_NIVELES = {
 
 
 # ========================================
-# BASE DE DATOS - INICIALIZACIÓN
+# INICIALIZAR BASE DE DATOS (autocontenido)
 # ========================================
 
 def inicializar_db():
-    """Crear base de datos y tablas si no existen"""
-    db_path = Path("data") / "rrhh_alvatross.db"
+    """Crear base de datos y tablas si no existen - TODO en un solo archivo"""
+    db_path = Path("data") / "talentflow_it.db"
     db_path.parent.mkdir(exist_ok=True)
     
     conn = sqlite3.connect(db_path)
@@ -69,7 +69,7 @@ def inicializar_db():
             idiomas TEXT,
             experiencia_total INTEGER DEFAULT 0,
             experiencia_telecom INTEGER DEFAULT 0,
-            experiencia_tmforum TEXT,
+            experiencia_estandares TEXT,
             ultimo_puesto TEXT,
             ultima_empresa TEXT,
             proyectos TEXT,
@@ -104,7 +104,7 @@ def inicializar_db():
             modalidad TEXT,
             stack_obligatorio TEXT NOT NULL,
             stack_deseable TEXT,
-            experiencia_tmforum TEXT,
+            experiencia_estandares TEXT,
             experiencia_telecom TEXT,
             certificaciones_requeridas TEXT,
             rango_salarial_min INTEGER,
@@ -179,6 +179,41 @@ def inicializar_db():
         )
     ''')
     
+    # Tabla banco de preguntas (integrado)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS preguntas_entrevista (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            categoria TEXT NOT NULL,
+            subcategoria TEXT,
+            texto TEXT NOT NULL,
+            ejemplo_respuesta TEXT,
+            nivel_dificultad TEXT,
+            tags TEXT,
+            creada_por TEXT DEFAULT 'sistema'
+        )
+    ''')
+    
+    # Sembrar preguntas iniciales genéricas IT/Telecom
+    cursor.execute('SELECT COUNT(*) FROM preguntas_entrevista')
+    if cursor.fetchone()[0] == 0:
+        preguntas_iniciales = [
+            ('general', None, 'Cuéntame tu trayectoria profesional en los últimos 5 años', 'Busca narrativa coherente, progresión, motivaciones', 'medio', 'trayectoria,experiencia'),
+            ('general', None, '¿Por qué estás interesado en esta oportunidad?', 'Busca motivación real, no respuesta genérica', 'medio', 'motivación,empresa'),
+            ('general', None, '¿Qué sabes de nuestras soluciones OSS/BSS y APIs estándar?', 'Valida investigación previa sobre el core business', 'dificil', 'oss,bss,apis,investigación'),
+            ('cultural', None, 'Describe tu experiencia trabajando en equipos multidisciplinares (devs, QA, arquitectos, producto)', 'Busca colaboración real, no solo coexistencia', 'medio', 'colaboración,equipos'),
+            ('cultural', None, 'Valoramos proyectos de larga duración con clientes estables. ¿Cómo ves tu evolución profesional a 3-5 años?', 'Busca estabilidad vs. job hopping constante', 'medio', 'estabilidad,carrera'),
+            ('tecnica', 'backend', 'En un microservicio Java/Spring Boot, ¿cómo gestionarías la resiliencia ante fallos de dependencias externas?', 'Esperamos: circuit breakers, timeouts, retries con backoff exponencial', 'dificil', 'resiliencia,microservicios,spring'),
+            ('tecnica', 'devops', '¿Cómo diseñarías un pipeline CI/CD para un microservicio con requerimientos de seguridad en entornos regulados?', 'Esperamos: SAST/DAST, escaneo imágenes, secrets management', 'dificil', 'cicd,seguridad,compliance'),
+            ('tecnica', 'qa', '¿Cómo estructurarías la estrategia de testing para una API REST estándar (ej: Product Ordering)?', 'Esperamos: contrato primero, tests de contrato, idempotencia', 'dificil', 'testing,apis'),
+            ('tecnica', 'integrations', '¿Qué información es crítica en los logs de una integración con un sistema legacy de provisión?', 'Esperamos: correlation ID, payload sanitizado, timestamps', 'medio', 'logs,integración,debugging'),
+            ('tecnica', 'solution_architect', 'Un cliente exige alta disponibilidad (99.99%) para su plataforma OSS. ¿Qué elementos arquitectónicos propondrías?', 'Esperamos: multi-AZ/region, circuit breakers, rate limiting, cache layers', 'dificil', 'arquitectura,ha,escalabilidad'),
+        ]
+        cursor.executemany('''
+            INSERT INTO preguntas_entrevista 
+            (categoria, subcategoria, texto, ejemplo_respuesta, nivel_dificultad, tags, creada_por)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', preguntas_iniciales)
+    
     conn.commit()
     conn.close()
     return db_path
@@ -203,8 +238,9 @@ def pausa():
 def crear_candidato(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   🆕 REGISTRAR NUEVO CANDIDATO")
+    print("   🆕 REGISTRAR NUEVO CANDIDATO - TalentFlow IT")
     print("=" * 70)
+    print("\n💡 Stack especializado: APIs estándar, OSS/BSS, Java/Spring, Kubernetes")
     
     datos = {}
     while not datos.get('nombre'):
@@ -223,7 +259,7 @@ def crear_candidato(db_path):
     datos['vehiculo_propio'] = 1 if input("¿Vehículo propio? (S/n): ").strip().lower() in ('s', 'si', 'y', 'yes', '') else 0
     datos['nivel_estudios'] = input("Nivel de estudios (Grado/Máster/FP/Doctorado): ").strip()
     datos['titulacion'] = input("Titulación específica: ").strip()
-    datos['certificaciones'] = input("Certificaciones relevantes: ").strip()
+    datos['certificaciones'] = input("Certificaciones relevantes (AWS, Azure, ISO27001...): ").strip()
     datos['idiomas'] = input("Idiomas (ej: Inglés C1, Francés B2): ").strip()
     
     try:
@@ -238,16 +274,16 @@ def crear_candidato(db_path):
     
     datos['ultimo_puesto'] = input("Último puesto: ").strip()
     datos['ultima_empresa'] = input("Última empresa: ").strip()
-    datos['proyectos'] = input("Proyectos relevantes: ").strip()
-    datos['experiencia_tmforum'] = input("Experiencia TM Forum/ODA (Sí/No/Nivel): ").strip()
+    datos['proyectos'] = input("Proyectos relevantes (breve): ").strip()
+    datos['experiencia_estandares'] = input("Experiencia con APIs estándar/ODA (Sí/No/Nivel): ").strip()
     datos['stack_lenguajes'] = input("Lenguajes (ej: Java, Python, TypeScript): ").strip()
     datos['stack_frameworks'] = input("Frameworks (ej: Spring Boot, Angular, React): ").strip()
-    datos['stack_bbdd'] = input("Bases de datos (ej: Oracle, PostgreSQL): ").strip()
+    datos['stack_bbdd'] = input("Bases de datos (Oracle, PostgreSQL, MongoDB...): ").strip()
     datos['stack_cloud'] = input("Cloud (AWS/Azure/GCP): ").strip()
-    datos['stack_devops'] = input("DevOps (Docker, Kubernetes, Terraform): ").strip()
-    datos['stack_apis'] = input("APIs/Integración (REST, TMForum, SOAP): ").strip()
-    datos['stack_mensajeria'] = input("Mensajería (Kafka, RabbitMQ): ").strip()
-    datos['competencias'] = input("Competencias blandas: ").strip()
+    datos['stack_devops'] = input("DevOps (Docker, Kubernetes, Terraform...): ").strip()
+    datos['stack_apis'] = input("APIs/Integración (REST, SOAP, GraphQL...): ").strip()
+    datos['stack_mensajeria'] = input("Mensajería (Kafka, RabbitMQ...): ").strip()
+    datos['competencias'] = input("Competencias blandas (ej: Ownership, Comunicación técnica): ").strip()
     datos['salario_esperado'] = input("Expectativa salarial (k€): ").strip()
     
     print("\nPerfiles IT:")
@@ -255,7 +291,7 @@ def crear_candidato(db_path):
         print(f"  {key:20} - {value}")
     datos['perfil_it'] = input("\nPerfil IT*: ").strip().lower()
     while datos['perfil_it'] not in PERFILES_IT:
-        print("⚠️  Perfil no válido")
+        print("⚠️  Perfil no válido. Elige uno de la lista anterior.")
         datos['perfil_it'] = input("Perfil IT*: ").strip().lower()
     
     print("\nSeniority:")
@@ -263,10 +299,10 @@ def crear_candidato(db_path):
         print(f"  {key:10} - {value}")
     datos['seniority'] = input("\nSeniority*: ").strip().lower()
     while datos['seniority'] not in SENIORITY_NIVELES:
-        print("⚠️  Seniority no válido")
+        print("⚠️  Seniority no válido. Elige uno de la lista.")
         datos['seniority'] = input("Seniority*: ").strip().lower()
     
-    datos['notas'] = input("\nNotas iniciales: ").strip()
+    datos['notas'] = input("\nNotas iniciales (stack específico, proyectos OSS/BSS...): ").strip()
     gdpr = input("\n✅ ¿Consentimiento GDPR registrado? (S/n): ").strip().lower()
     datos['gdpr_consent'] = 1 if gdpr in ('', 's', 'si', 'yes') else 0
     
@@ -280,7 +316,7 @@ def crear_candidato(db_path):
             id, nombre, email, telefono, linkedin, github, localizacion,
             remoto, disponibilidad, carnet_conducir, vehiculo_propio,
             nivel_estudios, titulacion, certificaciones, idiomas,
-            experiencia_total, experiencia_telecom, experiencia_tmforum,
+            experiencia_total, experiencia_telecom, experiencia_estandares,
             ultimo_puesto, ultima_empresa, proyectos,
             stack_lenguajes, stack_frameworks, stack_bbdd, stack_cloud,
             stack_devops, stack_apis, stack_mensajeria,
@@ -306,7 +342,7 @@ def crear_candidato(db_path):
         datos.get('idiomas'),
         datos['experiencia_total'],
         datos['experiencia_telecom'],
-        datos.get('experiencia_tmforum'),
+        datos.get('experiencia_estandares'),
         datos.get('ultimo_puesto'),
         datos.get('ultima_empresa'),
         datos.get('proyectos'),
@@ -334,23 +370,24 @@ def crear_candidato(db_path):
     print(f"\n✅ Candidato registrado correctamente")
     print(f"   ID: {candidato_id}")
     print(f"   Nombre: {datos['nombre']}")
-    print(f"   Perfil: {PERFILES_IT[datos['perfil_it']]}")
+    print(f"   Perfil: {PERFILES_IT[datos['perfil_it']]} ({datos['seniority'].upper()})")
+    print(f"   Stack: {datos['stack_lenguajes'] or 'Sin especificar'}")
     pausa()
 
 
 def listar_candidatos(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   🔍 LISTAR CANDIDATOS")
+    print("   🔍 LISTAR CANDIDATOS - TalentFlow IT")
     print("=" * 70)
     
     buscar = input("\nBuscar (nombre, stack, puesto) - Deja en blanco para todos: ").strip()
-    estado = input("Filtrar por estado (activo/screening/entrevista/offer) - Deja en blanco: ").strip().lower() or None
+    estado = input("Filtrar por estado (activo/screening/entrevista/offer/descartado) - Deja en blanco: ").strip().lower() or None
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    query = "SELECT id, nombre, email, telefono, ultimo_puesto, stack_lenguajes, perfil_it, seniority, estado FROM candidatos WHERE estado != 'archivado'"
+    query = "SELECT id, nombre, email, telefono, ultimo_puesto, stack_lenguajes, perfil_it, seniority, estado, fecha_registro FROM candidatos WHERE estado != 'archivado'"
     params = []
     
     if estado:
@@ -373,14 +410,111 @@ def listar_candidatos(db_path):
         return
     
     print(f"\n📊 Encontrados: {len(resultados)} candidatos\n")
-    print(f"{'ID':<15} {'Nombre':<25} {'Puesto':<20} {'Perfil':<15} {'Seniority':<10} {'Estado':<12}")
-    print("-" * 95)
+    print(f"{'ID':<15} {'Nombre':<25} {'Puesto':<20} {'Perfil':<20} {'Seniority':<10} {'Estado':<12}")
+    print("-" * 100)
     
     for row in resultados:
-        perfil = row[6][:15] if row[6] else '-'
+        perfil = PERFILES_IT.get(row[6], row[6])[:20] if row[6] else '-'
         print(f"{row[0]:<15} {row[1][:23]:<25} {row[4][:18] if row[4] else '-':<20} "
-              f"{perfil:<15} {row[7] or '-':<10} {row[8]:<12}")
+              f"{perfil:<20} {row[7] or '-':<10} {row[8]:<12}")
     
+    pausa()
+
+
+def ver_detalle_candidato(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   👁️  DETALLE DE CANDIDATO")
+    print("=" * 70)
+    
+    cid = input("\nID del candidato: ").strip()
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    cursor.execute('SELECT * FROM candidatos WHERE id = ?', (cid,))
+    candidato = cursor.fetchone()
+    
+    if not candidato:
+        conn.close()
+        print("\n❌ Candidato no encontrado.")
+        pausa()
+        return
+    
+    # Mostrar datos completos
+    print(f"\n{'='*70}")
+    print(f"📄 FICHA COMPLETA: {candidato['nombre']}")
+    print(f"{'='*70}")
+    print(f"ID:          {candidato['id']}")
+    print(f"Email:       {candidato['email'] or '-'}")
+    print(f"Teléfono:    {candidato['telefono'] or '-'}")
+    print(f"LinkedIn:    {candidato['linkedin'] or '-'}")
+    print(f"GitHub:      {candidato['github'] or '-'}")
+    print(f"📍 Ubicación: {candidato['localizacion'] or '-'} | Remoto: {candidato['remoto'] or '-'}")
+    print(f"📅 Incorporación: {candidato['disponibilidad'] or '-'}")
+    print(f"🚗 Carnet: {'Sí' if candidato['carnet_conducir'] else 'No'} | Vehículo: {'Sí' if candidato['vehiculo_propio'] else 'No'}")
+    
+    print(f"\n🎓 Formación:")
+    print(f"   Estudios:    {candidato['nivel_estudios'] or '-'}")
+    print(f"   Titulación:  {candidato['titulacion'] or '-'}")
+    print(f"   Certificaciones: {candidato['certificaciones'] or '-'}")
+    print(f"   Idiomas:     {candidato['idiomas'] or '-'}")
+    
+    print(f"\n💼 Experiencia:")
+    print(f"   Total IT:    {candidato['experiencia_total']} años")
+    print(f"   Telecom OSS/BSS: {candidato['experiencia_telecom']} años")
+    print(f"   Último puesto: {candidato['ultimo_puesto'] or '-'} en {candidato['ultima_empresa'] or '-'}")
+    print(f"   APIs estándar/ODA: {candidato['experiencia_estandares'] or 'Sin experiencia'}")
+    print(f"   Proyectos:   {candidato['proyectos'] or '-'}")
+    
+    print(f"\n🛠️  Stack técnico:")
+    print(f"   Lenguajes:   {candidato['stack_lenguajes'] or '-'}")
+    print(f"   Frameworks:  {candidato['stack_frameworks'] or '-'}")
+    print(f"   BBDD:        {candidato['stack_bbdd'] or '-'}")
+    print(f"   Cloud:       {candidato['stack_cloud'] or '-'}")
+    print(f"   DevOps:      {candidato['stack_devops'] or '-'}")
+    print(f"   APIs:        {candidato['stack_apis'] or '-'}")
+    print(f"   Mensajería:  {candidato['stack_mensajeria'] or '-'}")
+    
+    print(f"\n🌟 Competencias: {candidato['competencias'] or '-'}")
+    
+    print(f"\n💰 Salario esperado: {candidato['salario_esperado'] or '-'}")
+    print(f"👤 Perfil IT: {PERFILES_IT.get(candidato['perfil_it'], candidato['perfil_it'] or '-')}")
+    print(f"⭐ Seniority: {SENIORITY_NIVELES.get(candidato['seniority'], candidato['seniority'] or '-')}")
+    
+    print(f"\n📝 Notas:")
+    print(f"   {candidato['notas'] or '-'}")
+    
+    print(f"\n🛡️  GDPR: {'✅ Consentimiento registrado' if candidato['gdpr_consent'] else '⚠️  Pendiente'}")
+    print(f"📅 Registro:  {candidato['fecha_registro']}")
+    print(f"🔍 Origen:     {candidato['origen']}")
+    print(f"🏷️  Estado:    {candidato['estado']}")
+    
+    # Mostrar historial de evaluaciones R/S/T
+    print(f"\n{'='*70}")
+    print("📊 EVALUACIONES R/S/T - Sistema TalentFlow")
+    print(f"{'='*70}")
+    
+    cursor.execute('''
+        SELECT * FROM evaluaciones 
+        WHERE candidato_id = ? 
+        ORDER BY fecha DESC
+    ''', (cid,))
+    evaluaciones = cursor.fetchall()
+    
+    if not evaluaciones:
+        print("📭 Sin evaluaciones registradas aún.")
+    else:
+        for e in evaluaciones:
+            print(f"\n[{e['fecha']}] Evaluador: {e['evaluador']}")
+            print(f"   R (Comunicación): {e['r_puntuacion']}/10 | {e['r_notas'] or '-'}")
+            print(f"   S (Técnica):      {e['s_puntuacion']}/10 | {e['s_notas'] or '-'}")
+            print(f"   T (Cultural):     {e['t_puntuacion']}/10 | {e['t_notas'] or '-'}")
+            print(f"   ➤ Score final:    {e['score_final']} | Recomendación: {e['recomendacion']}")
+            if e['senales_encaje']:
+                print(f"   ✅ Señales: {e['senales_encaje']}")
+    
+    conn.close()
     pausa()
 
 
@@ -391,8 +525,9 @@ def listar_candidatos(db_path):
 def crear_vacante(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   ➕ CREAR NUEVA VACANTE")
+    print("   ➕ CREAR NUEVA VACANTE - TalentFlow IT")
     print("=" * 70)
+    print("\n💡 Stack especializado: APIs estándar, OSS/BSS, cloud-native")
     
     datos = {}
     datos['titulo'] = input("\nTítulo del puesto*: ").strip()
@@ -419,50 +554,58 @@ def crear_vacante(db_path):
     datos['departamento'] = input("Departamento (Desarrollo/DevOps/Producto/Arquitectura/Operaciones): ").strip()
     datos['ubicacion'] = input("Ubicación (Madrid/Avilés/Remoto): ").strip()
     datos['modalidad'] = input("Modalidad (Remoto_Total/Remoto_Parcial/Presencial): ").strip()
-    datos['stack_obligatorio'] = input("\nStack obligatorio*: ").strip()
+    
+    print("\n--- Requisitos técnicos ---")
+    datos['stack_obligatorio'] = input("Stack obligatorio* (ej: Java/Spring Boot, APIs REST, Kubernetes): ").strip()
     while not datos['stack_obligatorio']:
         print("⚠️  El stack obligatorio es obligatorio")
         datos['stack_obligatorio'] = input("Stack obligatorio*: ").strip()
     
-    datos['stack_deseable'] = input("Stack deseable: ").strip()
-    datos['experiencia_tmforum'] = input("Experiencia TM Forum/ODA (Obligatorio/Deseable/No_relevante): ").strip()
+    datos['stack_deseable'] = input("Stack deseable (ej: AWS, Kafka, Terraform): ").strip()
+    datos['experiencia_estandares'] = input("Experiencia APIs estándar/ODA (Obligatorio/Deseable/No_relevante): ").strip()
     datos['experiencia_telecom'] = input("Experiencia Telecom OSS/BSS (Obligatorio/Deseable/No_relevante): ").strip()
-    datos['certificaciones_requeridas'] = input("Certificaciones requeridas: ").strip()
+    datos['certificaciones_requeridas'] = input("Certificaciones requeridas (ej: AWS/Azure, ISO27001): ").strip()
     
+    print("\n--- Condiciones de contratación ---")
     try:
-        datos['rango_salarial_min'] = int(input("\nRango salarial mínimo (k€)*: ").strip())
+        datos['rango_salarial_min'] = int(input("Rango salarial mínimo (k€)*: ").strip())
     except ValueError:
+        print("⚠️  Valor numérico requerido. Usando 0.")
         datos['rango_salarial_min'] = 0
     
     try:
         datos['rango_salarial_max'] = int(input("Rango salarial máximo (k€)*: ").strip())
     except ValueError:
+        print("⚠️  Valor numérico requerido. Usando 0.")
         datos['rango_salarial_max'] = 0
     
     datos['tipo_contrato'] = input("Tipo de contrato (Indefinido/Temporal): ").strip()
     datos['jornada'] = input("Jornada (Completa/Parcial): ").strip()
     datos['necesidad'] = input("Tipo de necesidad (Nueva/Reemplazo): ").strip()
-    datos['responsable_seleccion'] = input("\nResponsable de selección (RRHH)*: ").strip()
+    
+    print("\n--- Stakeholders ---")
+    datos['responsable_seleccion'] = input("Responsable de selección (RRHH)*: ").strip()
     while not datos['responsable_seleccion']:
         print("⚠️  El responsable es obligatorio")
         datos['responsable_seleccion'] = input("Responsable de selección (RRHH)*: ").strip()
     
     datos['responsable_tecnico'] = input("Responsable técnico (Tech Lead/Arquitecto): ").strip()
     datos['hiring_manager'] = input("Hiring Manager (Jefe de Área): ").strip()
+    
     datos['fecha_cierre_estimada'] = input("\nFecha cierre estimada (YYYY-MM-DD, opcional): ").strip()
-    datos['notas'] = input("Notas adicionales: ").strip()
+    datos['notas'] = input("Notas adicionales (stack específico, cliente...): ").strip()
     
     # Generar ID único
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM vacantes WHERE id LIKE ?', (f"ALV-{datetime.now().year}%",))
+    cursor.execute('SELECT COUNT(*) FROM vacantes WHERE id LIKE ?', (f"TF-{datetime.now().year}%",))
     count = cursor.fetchone()[0] + 1
-    vacante_id = f"ALV-{datetime.now().year}-{count:03d}"
+    vacante_id = f"TF-{datetime.now().year}-{count:03d}"
     
     cursor.execute('''
         INSERT INTO vacantes (
             id, titulo, perfil_it, seniority, departamento, ubicacion, modalidad,
-            stack_obligatorio, stack_deseable, experiencia_tmforum, experiencia_telecom,
+            stack_obligatorio, stack_deseable, experiencia_estandares, experiencia_telecom,
             certificaciones_requeridas, rango_salarial_min, rango_salarial_max,
             tipo_contrato, jornada, necesidad, responsable_seleccion,
             responsable_tecnico, hiring_manager, fecha_apertura,
@@ -478,7 +621,7 @@ def crear_vacante(db_path):
         datos.get('modalidad'),
         datos['stack_obligatorio'],
         datos.get('stack_deseable'),
-        datos.get('experiencia_tmforum'),
+        datos.get('experiencia_estandares'),
         datos.get('experiencia_telecom'),
         datos.get('certificaciones_requeridas'),
         datos['rango_salarial_min'],
@@ -502,21 +645,22 @@ def crear_vacante(db_path):
     print(f"   ID: {vacante_id}")
     print(f"   Puesto: {datos['titulo']}")
     print(f"   Perfil: {PERFILES_IT[datos['perfil_it']]} ({datos['seniority'].upper()})")
+    print(f"   Stack: {datos['stack_obligatorio']}")
     pausa()
 
 
 def listar_vacantes(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   📋 LISTAR VACANTES")
+    print("   📋 LISTAR VACANTES - TalentFlow IT")
     print("=" * 70)
     
-    estado = input("\nFiltrar por estado (abierta/cerrada_cubierta) - Deja en blanco para todas: ").strip().lower() or None
+    estado = input("\nFiltrar por estado (abierta/cerrada_cubierta/cerrada_cancelada) - Deja en blanco para todas: ").strip().lower() or None
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    query = "SELECT id, titulo, perfil_it, seniority, ubicacion, estado FROM vacantes"
+    query = "SELECT id, titulo, perfil_it, seniority, ubicacion, estado, stack_obligatorio FROM vacantes"
     params = []
     
     if estado:
@@ -545,14 +689,15 @@ def listar_vacantes(db_path):
 
 
 # ========================================
-# EVALUACIONES R/S/T
+# EVALUACIONES R/S/T - Sistema TalentFlow
 # ========================================
 
 def crear_evaluacion(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   ➕ NUEVA EVALUACIÓN R/S/T")
+    print("   ➕ NUEVA EVALUACIÓN R/S/T - Sistema TalentFlow")
     print("=" * 70)
+    print("\n📌 R = Entrevista/Comunicación | S = Técnica/Stack | T = Cultural/Soft Skills")
     
     cid = input("\nID del candidato: ").strip()
     conn = sqlite3.connect(db_path)
@@ -582,10 +727,10 @@ def crear_evaluacion(db_path):
     evaluador = input("\nEvaluador (tu nombre): ").strip()
     
     print("\n--- Dimensión R: Entrevista/Comunicación (1-10) ---")
-    print("   1-3: respuestas vagas, sin ejemplos")
-    print("   4-6: base correcta, algunos ejemplos")
-    print("   7-8: sólido, ejemplos claros")
-    print("   9-10: excelente, liderazgo/ownership")
+    print("   1-3: respuestas vagas, sin ejemplos, confusión conceptos base")
+    print("   4-6: base correcta, algunos ejemplos, huecos puntuales")
+    print("   7-8: sólido, ejemplos claros, buena toma decisiones")
+    print("   9-10: excelente, liderazgo/ownership, profundidad, anticipa riesgos")
     try:
         r_puntuacion = int(input("Puntuación R (1-10)*: ").strip())
     except ValueError:
@@ -593,6 +738,7 @@ def crear_evaluacion(db_path):
     r_notas = input("Notas R: ").strip()
     
     print("\n--- Dimensión S: Técnica/Stack (1-10) ---")
+    print("   Evalúa stack específico: APIs estándar, Java/Spring, Kubernetes...")
     try:
         s_puntuacion = int(input("Puntuación S (1-10)*: ").strip())
     except ValueError:
@@ -600,7 +746,7 @@ def crear_evaluacion(db_path):
     s_notas = input("Notas S: ").strip()
     
     print("\n--- Dimensión T: Cultural/Soft Skills (1-10) ---")
-    print("   Alineación DevSecOps, colaboración, estabilidad")
+    print("   Alineación DevSecOps, colaboración equipos multidisciplinares, estabilidad")
     try:
         t_puntuacion = int(input("Puntuación T (1-10)*: ").strip())
     except ValueError:
@@ -624,6 +770,27 @@ def crear_evaluacion(db_path):
     
     print(f"\n➤ Score final calculado: {score_final}/10")
     
+    # Señales de buen encaje según perfil
+    senales = []
+    if perfil == 'backend':
+        senales = ["Explica decisiones técnicas con datos", "Piensa en resiliencia (timeouts/retries)", "Conoce prácticas calidad (tests/code review)"]
+    elif perfil == 'devops':
+        senales = ["Automatiza por defecto (IaC, pipelines)", "Enfoca seguridad sin bloquear entregas (DevSecOps)"]
+    elif perfil == 'qa':
+        senales = ["Pensamiento crítico y precisión", "Colabora como habilitador (no policía)"]
+    elif perfil == 'integrations':
+        senales = ["Precisión en contratos APIs y logs", "Piensa interoperabilidad desde diseño"]
+    
+    if senales:
+        print("\n✅ Señales de buen encaje (marca las que observes):")
+        senales_seleccionadas = []
+        for i, senal in enumerate(senales, 1):
+            if input(f"  [{i}] {senal} (S/n): ").strip().lower() in ('s', 'si', 'y', 'yes', ''):
+                senales_seleccionadas.append(senal)
+        senales_encaje = " | ".join(senales_seleccionadas) if senales_seleccionadas else ""
+    else:
+        senales_encaje = ""
+    
     print("\n--- Recomendación final ---")
     print("  1. Contratar")
     print("  2. Reservas (seguir evaluando)")
@@ -639,8 +806,8 @@ def crear_evaluacion(db_path):
             r_puntuacion, r_notas,
             s_puntuacion, s_notas,
             t_puntuacion, t_notas,
-            score_final, recomendacion, tipo_entrevista
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            score_final, senales_encaje, recomendacion, tipo_entrevista
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         cid,
         vid if vid else None,
@@ -650,12 +817,15 @@ def crear_evaluacion(db_path):
         s_puntuacion, s_notas,
         t_puntuacion, t_notas,
         score_final,
+        senales_encaje,
         recomendacion,
         'general'
     ))
     
-    # Actualizar estado si score alto
-    if score_final >= 7.0:
+    # Actualizar estado del candidato según score
+    if score_final >= 8.5:
+        cursor.execute('UPDATE candidatos SET estado = ? WHERE id = ?', ('finalista', cid))
+    elif score_final >= 7.0:
         cursor.execute('UPDATE candidatos SET estado = ? WHERE id = ?', ('entrevista', cid))
     
     conn.commit()
@@ -664,26 +834,265 @@ def crear_evaluacion(db_path):
     print(f"\n✅ Evaluación registrada correctamente")
     print(f"   Score final: {score_final}/10")
     print(f"   Recomendación: {recomendacion}")
+    if senales_encaje:
+        print(f"   ✅ Señales: {senales_encaje}")
     pausa()
 
 
 # ========================================
-# MENÚ PRINCIPAL
+# BANCO DE PREGUNTAS - Integrado
+# ========================================
+
+def menu_preguntas(db_path):
+    while True:
+        limpiar_pantalla()
+        print("=" * 70)
+        print("   ❓ BANCO DE PREGUNTAS - TalentFlow IT")
+        print("=" * 70)
+        print("\n1. 🔍 Buscar preguntas por perfil/perfil IT")
+        print("2. 📋 Listar todas las preguntas")
+        print("3. 🎯 Generar guía de entrevista (perfil IT)")
+        print("0. ⬅️  Volver")
+        print("-" * 70)
+        
+        opcion = input("\n➤ Opción: ").strip()
+        
+        if opcion == "1":
+            buscar_preguntas(db_path)
+        elif opcion == "2":
+            listar_todas_preguntas(db_path)
+        elif opcion == "3":
+            generar_guia_entrevista(db_path)
+        elif opcion == "0":
+            break
+        else:
+            print("\n⚠️  Opción no válida.")
+            pausa()
+
+
+def buscar_preguntas(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   🔍 BUSCAR PREGUNTAS POR PERFIL IT")
+    print("=" * 70)
+    
+    print("\nPerfiles IT:")
+    for key, value in PERFILES_IT.items():
+        print(f"  {key:20} - {value}")
+    
+    perfil = input("\nPerfil IT (ej: backend, devops) o 'general' para todas: ").strip().lower()
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    if perfil == 'general' or not perfil:
+        cursor.execute('SELECT * FROM preguntas_entrevista ORDER BY categoria, nivel_dificultad DESC')
+    else:
+        cursor.execute('''
+            SELECT * FROM preguntas_entrevista 
+            WHERE subcategoria = ? OR categoria = 'general' OR categoria = 'cultural' OR categoria = 'situacional'
+            ORDER BY categoria, nivel_dificultad DESC
+        ''', (perfil,))
+    
+    resultados = cursor.fetchall()
+    conn.close()
+    
+    if not resultados:
+        print("\n📭 No se encontraron preguntas para este perfil.")
+        pausa()
+        return
+    
+    print(f"\n📊 Encontradas: {len(resultados)} preguntas\n")
+    
+    categoria_actual = None
+    for p in resultados:
+        if p[1] != categoria_actual:
+            categoria_actual = p[1]
+            print(f"\n{'='*70}")
+            print(f"📌 CATEGORÍA: {categoria_actual.upper()}")
+            if p[2]:
+                print(f"   Subcategoría: {p[2]}")
+            print('='*70)
+        
+        nivel = p[5][:1].upper() if p[5] else '?'
+        print(f"\n[ID: {p[0]}] ({nivel})")
+        print(f"❓ {p[3]}")
+        if p[4]:
+            print(f"💡 Ejemplo: {p[4][:70]}...")
+        if p[6]:
+            print(f"🏷️  Tags: {p[6]}")
+    
+    pausa()
+
+
+def listar_todas_preguntas(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   📋 TODAS LAS PREGUNTAS - TalentFlow IT")
+    print("=" * 70)
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM preguntas_entrevista ORDER BY categoria, subcategoria, nivel_dificultad DESC')
+    resultados = cursor.fetchall()
+    conn.close()
+    
+    if not resultados:
+        print("\n📭 No hay preguntas en el banco.")
+        pausa()
+        return
+    
+    print(f"\n📊 Total: {len(resultados)} preguntas\n")
+    
+    categoria_actual = None
+    for p in resultados:
+        if p[1] != categoria_actual:
+            categoria_actual = p[1]
+            print(f"\n{'='*70}")
+            print(f"📌 {categoria_actual.upper()}")
+            print('='*70)
+        
+        perfil = f" | {p[2]}" if p[2] else ""
+        nivel = p[5][:1].upper() if p[5] else '?'
+        print(f"\n[ID: {p[0]}] ({nivel}){perfil}")
+        print(f"❓ {p[3]}")
+    
+    pausa()
+
+
+def generar_guia_entrevista(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   🎯 GUÍA DE ENTREVISTA POR PERFIL - TalentFlow IT")
+    print("=" * 70)
+    
+    print("\nPerfiles IT:")
+    for key, value in PERFILES_IT.items():
+        print(f"  {key:20} - {value}")
+    
+    perfil = input("\nPerfil IT para la guía*: ").strip().lower()
+    while perfil not in PERFILES_IT:
+        print("⚠️  Perfil no válido")
+        perfil = input("Perfil IT para la guía*: ").strip().lower()
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    # Obtener preguntas técnicas del perfil + generales/culturales
+    cursor.execute('''
+        SELECT * FROM preguntas_entrevista 
+        WHERE (subcategoria = ? AND categoria = 'tecnica') 
+           OR categoria IN ('general', 'cultural', 'situacional')
+        ORDER BY 
+            CASE categoria 
+                WHEN 'tecnica' THEN 1 
+                WHEN 'general' THEN 2 
+                WHEN 'cultural' THEN 3 
+                WHEN 'situacional' THEN 4 
+            END,
+            nivel_dificultad DESC
+        LIMIT 12
+    ''', (perfil,))
+    
+    preguntas = cursor.fetchall()
+    conn.close()
+    
+    if not preguntas:
+        print("\n📭 No se pudieron generar preguntas para este perfil.")
+        pausa()
+        return
+    
+    print(f"\n{'='*70}")
+    print(f"📄 GUÍA DE ENTREVISTA: {PERFILES_IT[perfil]}")
+    print(f"{'='*70}")
+    
+    seccion_actual = None
+    for i, p in enumerate(preguntas, 1):
+        if p[1] != seccion_actual:
+            seccion_actual = p[1]
+            print(f"\n{'─'*70}")
+            print(f"🔹 {seccion_actual.upper()}")
+            print('─'*70)
+        
+        print(f"\n{i}. {p[3]}")
+        if p[4]:
+            print(f"   💡 {p[4][:80]}...")
+    
+    print(f"\n{'='*70}")
+    print("💡 Tips TalentFlow:")
+    print("   • Para perfiles técnicos: profundiza en resiliencia y APIs estándar")
+    print("   • Para culturales: enfatiza estabilidad y trabajo en equipo largo plazo")
+    print("   • Siempre pregunta sobre experiencia OSS/BSS y estándares APIs")
+    print(f"{'='*70}")
+    
+    pausa()
+
+
+# ========================================
+# MÓDULO PRESENTACIÓN DE EMPRESA (único lugar con Alvatross)
+# ========================================
+
+def modulo_presentacion_empresa():
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   🏢 PRESENTACIÓN DE EMPRESA - ALVATROSS (Grupo SATEC)")
+    print("=" * 70)
+    print("""
+ALVATROSS es una empresa tecnológica especializada en soluciones de software 
+para la automatización de operaciones en telecomunicaciones, con enfoque en 
+OSS (Operational Support Systems) y plataformas digitales modernas.
+
+Pertenencia al Grupo SATEC:
+• Grupo tecnológico español con más de 25 años de experiencia
+• Presencia en proyectos globales (>15 países)
+• Solidez organizativa y comercial consolidada
+
+Plataforma OSS:
+• Cloud-native y modular
+• Basada en estándares TM Forum Open APIs y ODA
+• Gestión integral: catálogo, inventario, orquestación, provisión
+• Despliegue flexible: cloud o on-premise
+
+Stack tecnológico:
+• Arquitectura microservicios
+• APIs REST conformes a TM Forum
+• Compatibilidad multi-BBDD (Oracle, PostgreSQL, MySQL...)
+• DevOps y automatización de despliegues
+
+Oficinas:
+• Madrid (Avenida de Europa, Aravaca)
+• Avilés, Asturias
+
+Cultura:
+• Colaborativa y técnica
+• Orientada a soluciones reales y aplicadas
+• Proyectos de medio/largo plazo
+• Reconocida como "Great Place to Work"
+""")
+    print("=" * 70)
+    pausa()
+
+
+# ========================================
+# MENÚ PRINCIPAL - TalentFlow IT
 # ========================================
 
 def menu_principal(db_path):
     while True:
         limpiar_pantalla()
         print("=" * 70)
-        print("   📋 APP RRHH ALVATROSS - Grupo SATEC")
+        print("   📋 TALENTFLOW IT - Plataforma de Selección IT/Telecom")
+        print("   Stack: APIs Estándar | OSS/BSS | Java/Spring | Kubernetes")
         print("=" * 70)
         print("\n1. 👥 Gestión de Candidatos")
         print("2. 💼 Gestión de Vacantes")
         print("3. 📊 Evaluaciones R/S/T")
+        print("4. ❓ Banco de Preguntas Entrevista")
+        print("5. 🏢 Presentación de Empresa")
         print("0. ❌ Salir")
         print("-" * 70)
         
-        opcion = input("\n➤ Elige una opción (0-3): ").strip()
+        opcion = input("\n➤ Elige una opción (0-5): ").strip()
         
         if opcion == "1":
             while True:
@@ -693,6 +1102,7 @@ def menu_principal(db_path):
                 print("=" * 70)
                 print("\n1. 🆕 Registrar nuevo candidato")
                 print("2. 🔍 Listar candidatos")
+                print("3. 👁️  Ver detalle de candidato")
                 print("0. ⬅️  Volver")
                 print("-" * 70)
                 
@@ -701,6 +1111,8 @@ def menu_principal(db_path):
                     crear_candidato(db_path)
                 elif subopcion == "2":
                     listar_candidatos(db_path)
+                elif subopcion == "3":
+                    ver_detalle_candidato(db_path)
                 elif subopcion == "0":
                     break
         
@@ -727,7 +1139,7 @@ def menu_principal(db_path):
             while True:
                 limpiar_pantalla()
                 print("=" * 70)
-                print("   📊 EVALUACIONES R/S/T")
+                print("   📊 EVALUACIONES R/S/T - Sistema TalentFlow")
                 print("=" * 70)
                 print("\n1. ➕ Nueva evaluación")
                 print("0. ⬅️  Volver")
@@ -739,6 +1151,12 @@ def menu_principal(db_path):
                 elif subopcion == "0":
                     break
         
+        elif opcion == "4":
+            menu_preguntas(db_path)
+        
+        elif opcion == "5":
+            modulo_presentacion_empresa()
+        
         elif opcion == "0":
             print("\n👋 ¡Hasta pronto! Que el stack te acompañe.")
             break
@@ -749,12 +1167,28 @@ def menu_principal(db_path):
 
 
 # ========================================
-# PUNTO DE ENTRADA
+# PUNTO DE ENTRADA - EJECUCIÓN
 # ========================================
 
 if __name__ == "__main__":
+    # Crear carpeta data si no existe
+    if not os.path.exists("data"):
+        print("📁 Creando carpeta 'data' para la base de datos...")
+        os.makedirs("data", exist_ok=True)
+    
     # Inicializar base de datos
     db_path = inicializar_db()
+    print("✅ Base de datos inicializada correctamente")
+    print(f"   Ubicación: {db_path}")
+    
+    # Mostrar info TalentFlow IT
+    print("\n💡 Stack especializado integrado:")
+    print("   • APIs estándar (REST, SOAP, GraphQL)")
+    print("   • Plataformas OSS/BSS cloud-native")
+    print("   • Java/Spring Boot, Kubernetes, AWS/Azure")
+    print("   • Microservicios y arquitectura modular")
+    
+    pausa()
     
     # Ejecutar menú principal
     try:
