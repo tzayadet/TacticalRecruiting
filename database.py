@@ -2,51 +2,44 @@
 # -*- coding: utf-8 -*-
 """
 database.py
-Gestión de la base de datos SQLite para RRHH Alvatross
-Incluye: perfiles IT específicos, stack TM Forum/ODA, evaluación R/S/T
+Gestor de base de datos SQLite para aplicación RRHH integral
+Tablas: candidatos, vacantes, preguntas, perfiles_empresa, asociaciones,
+        centros_practicas, portales_empleo, plantillas_vacantes,
+        team_building, glosario
 """
 
 import sqlite3
 from pathlib import Path
 from datetime import datetime
-import csv
+from typing import List, Dict, Optional
 
 
 class DatabaseManager:
-    """Clase para manejar la conexión y operaciones con SQLite"""
+    """Gestor completo de la base de datos RRHH"""
     
-    def __init__(self, db_path=None):
+    def __init__(self, db_path: Optional[str] = None):
         if db_path is None:
-            # Carpeta data en el mismo directorio que el script
-            data_dir = Path(__file__).parent / "data"
-            data_dir.mkdir(exist_ok=True)
-            self.db_path = data_dir / "rrhh_alvatross.db"
+            self.db_path = Path("data") / "rrhh_app.db"
         else:
             self.db_path = Path(db_path)
         
-        self.conn = None
-        self._create_tables()
-    
-    def connect(self):
-        """Conectar a la base de datos"""
-        self.conn = sqlite3.connect(self.db_path)
-        self.conn.row_factory = sqlite3.Row
-        return self.conn.cursor()
-    
-    def disconnect(self):
-        """Cerrar conexión"""
-        if self.conn:
-            self.conn.commit()
-            self.conn.close()
-            self.conn = None
-    
-    def _create_tables(self):
-        """Crear tablas si no existen"""
-        cursor = self.connect()
+        # Crear carpeta data si no existe
+        self.db_path.parent.mkdir(exist_ok=True, parents=True)
         
-        # ========================================
-        # TABLA CANDIDATOS - Completa y específica
-        # ========================================
+        # Inicializar esquema de base de datos
+        self._crear_esquema()
+        self._sembrar_datos_iniciales()
+    
+    # ========================================
+    # INICIALIZACIÓN Y ESQUEMA
+    # ========================================
+    
+    def _crear_esquema(self):
+        """Crear todas las tablas si no existen"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Tabla candidatos
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS candidatos (
                 id TEXT PRIMARY KEY,
@@ -58,42 +51,23 @@ class DatabaseManager:
                 localizacion TEXT,
                 remoto TEXT,
                 disponibilidad TEXT,
-                carnet_conducir BOOLEAN DEFAULT 0,
-                vehiculo_propio BOOLEAN DEFAULT 0,
-                
-                -- Formación
                 nivel_estudios TEXT,
                 titulacion TEXT,
                 certificaciones TEXT,
                 idiomas TEXT,
-                
-                -- Experiencia profesional
                 experiencia_total INTEGER DEFAULT 0,
                 experiencia_telecom INTEGER DEFAULT 0,
-                experiencia_tmforum TEXT,
-                ultimo_puesto TEXT,
-                ultima_empresa TEXT,
-                proyectos TEXT,
-                
-                -- Stack técnico específico Alvatross
                 stack_lenguajes TEXT,
                 stack_frameworks TEXT,
                 stack_bbdd TEXT,
                 stack_cloud TEXT,
                 stack_devops TEXT,
                 stack_apis TEXT,
-                stack_mensajeria TEXT,
-                
-                -- Competencias blandas
                 competencias TEXT,
-                
-                -- RRHH y preferencias
                 salario_esperado TEXT,
                 estado TEXT DEFAULT 'activo',
                 perfil_it TEXT,
                 seniority TEXT,
-                
-                -- GDPR y metadata
                 gdpr_consent BOOLEAN DEFAULT 0,
                 fecha_registro TEXT,
                 origen TEXT DEFAULT 'manual',
@@ -101,153 +75,252 @@ class DatabaseManager:
             )
         ''')
         
-        # ========================================
-        # TABLA VACANTES - Gestión de posiciones
-        # ========================================
+        # Tabla vacantes
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS vacantes (
                 id TEXT PRIMARY KEY,
                 titulo TEXT NOT NULL,
-                perfil_it TEXT NOT NULL,
-                seniority TEXT NOT NULL,
                 departamento TEXT,
                 ubicacion TEXT,
                 modalidad TEXT,
-                
-                -- Requisitos técnicos
                 stack_obligatorio TEXT NOT NULL,
                 stack_deseable TEXT,
-                experiencia_tmforum TEXT,
-                experiencia_telecom TEXT,
-                certificaciones_requeridas TEXT,
-                
-                -- Condiciones de contratación
                 rango_salarial_min INTEGER,
                 rango_salarial_max INTEGER,
-                tipo_contrato TEXT,
-                jornada TEXT,
-                necesidad TEXT,
-                
-                -- Stakeholders
-                responsable_seleccion TEXT,
-                responsable_tecnico TEXT,
-                hiring_manager TEXT,
-                
-                -- Cronograma
-                fecha_apertura TEXT NOT NULL,
-                fecha_cierre_estimada TEXT,
-                fecha_cierre_real TEXT,
-                
-                -- Estado y KPIs
-                estado TEXT DEFAULT 'abierta',
-                time_to_hire INTEGER,
-                candidatos_totales INTEGER DEFAULT 0,
-                candidatos_finalistas INTEGER DEFAULT 0,
+                responsable TEXT,
+                urgencia TEXT DEFAULT 'media',
+                candidatos_finalistas TEXT,
                 candidato_seleccionado TEXT,
-                
-                -- Notas adicionales
+                estado TEXT DEFAULT 'abierta',
+                fecha_apertura TEXT NOT NULL,
                 notas TEXT
             )
         ''')
         
-        # ========================================
-        # TABLA EVALUACIONES R/S/T - Sistema Alvatross
-        # ========================================
+        # Tabla preguntas entrevista
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS evaluaciones (
+            CREATE TABLE IF NOT EXISTS preguntas (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                candidato_id TEXT NOT NULL,
-                vacante_id TEXT,
-                fecha TEXT NOT NULL,
-                evaluador TEXT NOT NULL,
-                
-                -- Dimensión R: Entrevista/Comunicación (1-10)
-                r_puntuacion INTEGER DEFAULT 0,
-                r_notas TEXT,
-                
-                -- Dimensión S: Técnica/Stack (1-10)
-                s_puntuacion INTEGER DEFAULT 0,
-                s_notas TEXT,
-                
-                -- Dimensión T: Cultural/Soft Skills (1-10)
-                t_puntuacion INTEGER DEFAULT 0,
-                t_notas TEXT,
-                
-                -- Score final calculado
-                score_final REAL DEFAULT 0.0,
-                
-                -- Señales de buen encaje (checklist)
-                senales_encaje TEXT,
-                
-                -- Recomendación final
-                recomendacion TEXT,
-                
-                -- Metadata
-                tipo_entrevista TEXT,
-                FOREIGN KEY (candidato_id) REFERENCES candidatos(id),
-                FOREIGN KEY (vacante_id) REFERENCES vacantes(id)
+                categoria TEXT NOT NULL,
+                subcategoria TEXT,
+                texto TEXT NOT NULL,
+                nivel_dificultad TEXT DEFAULT 'medio',
+                tags TEXT
             )
         ''')
         
-        # ========================================
-        # TABLA INTERACCIONES - Historial de contactos
-        # ========================================
+        # Tabla perfiles empresa
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS interacciones (
+            CREATE TABLE IF NOT EXISTS perfiles_empresa (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                candidato_id TEXT NOT NULL,
-                fecha TEXT NOT NULL,
+                nombre TEXT NOT NULL,
+                descripcion TEXT,
+                stack TEXT,
+                responsabilidades TEXT,
+                seniority TEXT,
+                salario_min INTEGER,
+                salario_max INTEGER
+            )
+        ''')
+        
+        # Tabla asociaciones colaboración
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS asociaciones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
                 tipo TEXT NOT NULL,
-                responsable TEXT,
-                notas TEXT,
-                proximo_paso TEXT,
-                FOREIGN KEY (candidato_id) REFERENCES candidatos(id)
+                contacto TEXT,
+                web TEXT,
+                notas TEXT
             )
         ''')
         
-        # ========================================
-        # TABLA ASOCIACIÓN CANDIDATO-VACANTE
-        # ========================================
+        # Tabla centros prácticas
         cursor.execute('''
-            CREATE TABLE IF NOT EXISTS candidato_vacante (
+            CREATE TABLE IF NOT EXISTS centros_practicas (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                candidato_id TEXT NOT NULL,
-                vacante_id TEXT NOT NULL,
-                fase TEXT DEFAULT 'screening',
-                fecha_asignacion TEXT NOT NULL,
-                notas_fase TEXT,
-                FOREIGN KEY (candidato_id) REFERENCES candidatos(id),
-                FOREIGN KEY (vacante_id) REFERENCES vacantes(id),
-                UNIQUE(candidato_id, vacante_id)
+                nombre TEXT NOT NULL,
+                tipo TEXT,
+                contacto TEXT,
+                web TEXT,
+                convenio_activo BOOLEAN DEFAULT 0
             )
         ''')
         
-        self.disconnect()
+        # Tabla portales empleo
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS portales_empleo (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL,
+                url TEXT,
+                tipo TEXT,
+                coste TEXT,
+                notas TEXT
+            )
+        ''')
+        
+        # Tabla plantillas vacantes
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS plantillas_vacantes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                titulo TEXT NOT NULL,
+                contenido TEXT NOT NULL,
+                departamento TEXT,
+                ultima_actualizacion TEXT
+            )
+        ''')
+        
+        # Tabla team building
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS team_building (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                categoria TEXT NOT NULL,
+                nombre_actividad TEXT NOT NULL,
+                empresa_proveedora TEXT,
+                precio_estimado TEXT,
+                duracion TEXT,
+                participantes_min INTEGER,
+                participantes_max INTEGER,
+                notas TEXT
+            )
+        ''')
+        
+        # Tabla glosario
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS glosario (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                termino TEXT NOT NULL UNIQUE,
+                definicion TEXT NOT NULL,
+                categoria TEXT
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+    
+    def _sembrar_datos_iniciales(self):
+        """Sembrar datos iniciales si las tablas están vacías"""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        # Preguntas iniciales
+        cursor.execute('SELECT COUNT(*) FROM preguntas')
+        if cursor.fetchone()[0] == 0:
+            preguntas = [
+                ('general', None, 'Cuéntame tu trayectoria profesional en los últimos 5 años', 'medio', 'trayectoria,experiencia'),
+                ('general', None, '¿Por qué estás interesado en esta oportunidad?', 'medio', 'motivación'),
+                ('tecnica', 'backend', '¿Cómo gestionarías la resiliencia ante fallos de dependencias externas en un microservicio?', 'dificil', 'resiliencia,microservicios'),
+                ('tecnica', 'devops', '¿Cómo diseñarías un pipeline CI/CD con controles de seguridad integrados?', 'dificil', 'cicd,seguridad'),
+                ('cultural', None, 'Describe tu experiencia trabajando en equipos multidisciplinares', 'medio', 'colaboración,equipos'),
+                ('situacional', None, 'Un bug crítico llega a producción. ¿Cuál es tu protocolo de actuación?', 'dificil', 'crisis,producción')
+            ]
+            cursor.executemany('''
+                INSERT INTO preguntas (categoria, subcategoria, texto, nivel_dificultad, tags)
+                VALUES (?, ?, ?, ?, ?)
+            ''', preguntas)
+        
+        # Perfiles empresa iniciales
+        cursor.execute('SELECT COUNT(*) FROM perfiles_empresa')
+        if cursor.fetchone()[0] == 0:
+            perfiles = [
+                ('Backend Developer', 'Desarrollo de microservicios y APIs REST', 'Java, Spring Boot, PostgreSQL, Kubernetes', 'Desarrollo módulos OSS, APIs, integración sistemas', 'mid', 35000, 50000),
+                ('DevOps Engineer', 'Automatización de despliegues y operaciones', 'Docker, Kubernetes, AWS/Azure, Terraform, GitLab CI', 'Pipelines CI/CD, infraestructura cloud, monitorización', 'mid', 40000, 55000),
+                ('QA Automation Engineer', 'Aseguramiento de calidad mediante pruebas automatizadas', 'Selenium, Cypress, JUnit, Postman, Jenkins', 'Diseño planes prueba, automatización APIs, colaboración con devs', 'mid', 32000, 45000)
+            ]
+            cursor.executemany('''
+                INSERT INTO perfiles_empresa (nombre, descripcion, stack, responsabilidades, seniority, salario_min, salario_max)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', perfiles)
+        
+        # Asociaciones iniciales
+        cursor.execute('SELECT COUNT(*) FROM asociaciones')
+        if cursor.fetchone()[0] == 0:
+            asociaciones = [
+                ('Inserta', 'discapacidad', 'info@inserta.es', 'https://www.inserta.es', 'Fundación ONCE para inserción laboral personas con discapacidad'),
+                ('Fundación Adecco', 'discapacidad', 'info@fundacionadecco.es', 'https://www.fundacionadecco.es', 'Inserción laboral colectivos vulnerables'),
+                ('Mujeres Tech', 'mujeres', 'contacto@mujerestech.es', 'https://mujerestech.es', 'Comunidad mujeres en tecnología'),
+                ('AdaLab', 'mujeres', 'hola@adalab.es', 'https://adalab.es', 'Formación tecnológica para mujeres')
+            ]
+            cursor.executemany('''
+                INSERT INTO asociaciones (nombre, tipo, contacto, web, notas)
+                VALUES (?, ?, ?, ?, ?)
+            ''', asociaciones)
+        
+        # Portales empleo iniciales
+        cursor.execute('SELECT COUNT(*) FROM portales_empleo')
+        if cursor.fetchone()[0] == 0:
+            portales = [
+                ('LinkedIn Jobs', 'https://linkedin.com/jobs', 'general', 'Premium Recruiter', 'Alta visibilidad IT'),
+                ('InfoJobs', 'https://www.infojobs.net', 'general', 'Bolsa completa', 'Alto volumen candidatos España'),
+                ('Tecnoempleo', 'https://www.tecnoempleo.com', 'IT', 'Gratuito/Pro', 'Especializado IT/Telecom'),
+                ('Stack Overflow Jobs', 'https://stackoverflow.com/jobs', 'IT', 'Gratuito', 'Talento técnico senior'),
+                ('GitHub Jobs', 'https://jobs.github.com', 'IT', 'Gratuito', 'Desarrolladores open source')
+            ]
+            cursor.executemany('''
+                INSERT INTO portales_empleo (nombre, url, tipo, coste, notas)
+                VALUES (?, ?, ?, ?, ?)
+            ''', portales)
+        
+        # Team building iniciales
+        cursor.execute('SELECT COUNT(*) FROM team_building')
+        if cursor.fetchone()[0] == 0:
+            actividades = [
+                ('deporte', 'Escape Room Tecnológico', 'EscapeKings', '25€/persona', '2 horas', 4, 8, 'Resolución problemas en equipo con temática ciberseguridad'),
+                ('gastronomia', 'Taller de cocina colaborativa', 'Cook&Team', '45€/persona', '3 horas', 6, 20, 'Elaboración menú completo en equipos rotativos'),
+                ('naturaleza', 'Ruta senderismo + picnic', 'AireLibre', '15€/persona', '5 horas', 10, 30, 'Ruta guiada por Sierra de Guadarrama'),
+                ('cultura', 'Visita guiada Museo Reina Sofía + taller', 'ArteEnEquipo', '20€/persona', '4 horas', 8, 25, 'Recorrido obras + taller creatividad'),
+                ('solidaridad', 'Voluntariado huerto urbano', 'HuertosSolidarios', 'Donación', '3 horas', 5, 15, 'Mantenimiento huerto para comedores sociales')
+            ]
+            cursor.executemany('''
+                INSERT INTO team_building (categoria, nombre_actividad, empresa_proveedora, precio_estimado, duracion, participantes_min, participantes_max, notas)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', actividades)
+        
+        # Glosario inicial
+        cursor.execute('SELECT COUNT(*) FROM glosario')
+        if cursor.fetchone()[0] == 0:
+            terminos = [
+                ('API', 'Application Programming Interface: interfaz que permite la comunicación entre sistemas', 'técnico'),
+                ('DevOps', 'Cultura y conjunto de prácticas que unen desarrollo y operaciones para acelerar entregas', 'metodologia'),
+                ('GDPR', 'Reglamento General de Protección de Datos de la UE. Marco legal para tratamiento datos personales', 'legal'),
+                ('Kanban', 'Método ágil de gestión visual del trabajo con límites WIP (Work In Progress)', 'metodologia'),
+                ('Microservicios', 'Arquitectura de software donde una aplicación se estructura como conjunto de servicios pequeños e independientes', 'técnico'),
+                ('ODA', 'Open Digital Architecture: marco de referencia para arquitecturas digitales abiertas', 'telecom'),
+                ('OSS', 'Operational Support Systems: sistemas que gestionan operaciones de red y servicios en telecomunicaciones', 'telecom'),
+                ('Scrum', 'Framework ágil con sprints, roles definidos (PO, SM, Dev Team) y ceremonias estructuradas', 'metodologia'),
+                ('SLA', 'Service Level Agreement: acuerdo de nivel de servicio que define expectativas entre proveedor y cliente', 'legal'),
+                ('Time to Hire', 'Métrica RRHH: tiempo transcurrido desde apertura vacante hasta aceptación oferta', 'rrhh')
+            ]
+            cursor.executemany('''
+                INSERT INTO glosario (termino, definicion, categoria)
+                VALUES (?, ?, ?)
+            ''', terminos)
+        
+        conn.commit()
+        conn.close()
     
     # ========================================
     # CRUD CANDIDATOS
     # ========================================
     
-    def crear_candidato(self, datos):
-        """Crear nuevo candidato"""
-        cursor = self.connect()
+    def crear_candidato(self, datos: Dict) -> str:
+        """Crear nuevo candidato. Devuelve ID generado."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
         
-        # Generar ID único basado en timestamp
         candidato_id = datetime.now().strftime("%Y%m%d%H%M%S")
         
         cursor.execute('''
             INSERT INTO candidatos (
                 id, nombre, email, telefono, linkedin, github, localizacion,
-                remoto, disponibilidad, carnet_conducir, vehiculo_propio,
-                nivel_estudios, titulacion, certificaciones, idiomas,
-                experiencia_total, experiencia_telecom, experiencia_tmforum,
-                ultimo_puesto, ultima_empresa, proyectos,
+                remoto, disponibilidad, nivel_estudios, titulacion, certificaciones,
+                idiomas, experiencia_total, experiencia_telecom,
                 stack_lenguajes, stack_frameworks, stack_bbdd, stack_cloud,
-                stack_devops, stack_apis, stack_mensajeria,
-                competencias, salario_esperado, estado, perfil_it, seniority,
-                gdpr_consent, fecha_registro, origen, notas
+                stack_devops, stack_apis, competencias, salario_esperado,
+                estado, perfil_it, seniority, gdpr_consent, fecha_registro,
+                origen, notas
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             candidato_id,
             datos.get('nombre'),
@@ -258,25 +331,18 @@ class DatabaseManager:
             datos.get('localizacion'),
             datos.get('remoto'),
             datos.get('disponibilidad'),
-            datos.get('carnet_conducir', 0),
-            datos.get('vehiculo_propio', 0),
             datos.get('nivel_estudios'),
             datos.get('titulacion'),
             datos.get('certificaciones'),
             datos.get('idiomas'),
             datos.get('experiencia_total', 0),
             datos.get('experiencia_telecom', 0),
-            datos.get('experiencia_tmforum'),
-            datos.get('ultimo_puesto'),
-            datos.get('ultima_empresa'),
-            datos.get('proyectos'),
             datos.get('stack_lenguajes'),
             datos.get('stack_frameworks'),
             datos.get('stack_bbdd'),
             datos.get('stack_cloud'),
             datos.get('stack_devops'),
             datos.get('stack_apis'),
-            datos.get('stack_mensajeria'),
             datos.get('competencias'),
             datos.get('salario_esperado'),
             'activo',
@@ -288,134 +354,143 @@ class DatabaseManager:
             datos.get('notas', '')
         ))
         
-        self.disconnect()
+        conn.commit()
+        conn.close()
         return candidato_id
     
-    def obtener_candidato(self, candidato_id):
-        """Obtener un candidato por ID"""
-        cursor = self.connect()
-        cursor.execute('SELECT * FROM candidatos WHERE id = ?', (candidato_id,))
-        resultado = cursor.fetchone()
-        self.disconnect()
-        return dict(resultado) if resultado else None
-    
-    def listar_candidatos(self, filtro_estado=None, buscar=None, perfil_it=None):
-        """Listar todos los candidatos con filtros"""
-        cursor = self.connect()
+    def obtener_candidato(self, candidato_id: str) -> Optional[Dict]:
+        """Obtener candidato por ID. Devuelve None si no existe."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
         
-        query = "SELECT id, nombre, email, telefono, ultimo_puesto, stack_lenguajes, perfil_it, seniority, estado, fecha_registro FROM candidatos WHERE estado != 'archivado'"
+        cursor.execute('SELECT * FROM candidatos WHERE id = ?', (candidato_id,))
+        row = cursor.fetchone()
+        conn.close()
+        
+        return dict(row) if row else None
+    
+    def listar_candidatos(self, buscar: str = None, estado: str = None, 
+                         perfil_it: str = None) -> List[Dict]:
+        """Listar candidatos con filtros opcionales."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        query = "SELECT id, nombre, email, telefono, stack_lenguajes, perfil_it, seniority, estado, fecha_registro FROM candidatos WHERE estado != 'archivado'"
         params = []
         
-        if filtro_estado:
+        if estado:
             query += " AND estado = ?"
-            params.append(filtro_estado)
+            params.append(estado)
         
         if perfil_it:
             query += " AND perfil_it = ?"
             params.append(perfil_it)
         
         if buscar:
-            query += " AND (nombre LIKE ? OR email LIKE ? OR stack_lenguajes LIKE ? OR ultimo_puesto LIKE ?)"
+            query += " AND (nombre LIKE ? OR stack_lenguajes LIKE ? OR email LIKE ?)"
             buscar_param = f"%{buscar}%"
-            params.extend([buscar_param, buscar_param, buscar_param, buscar_param])
+            params.extend([buscar_param, buscar_param, buscar_param])
         
         query += " ORDER BY fecha_registro DESC"
         
         cursor.execute(query, params)
         resultados = cursor.fetchall()
-        self.disconnect()
+        conn.close()
         
         return [dict(row) for row in resultados]
     
-    def actualizar_candidato(self, candidato_id, datos):
-        """Actualizar datos de un candidato"""
-        cursor = self.connect()
+    def actualizar_candidato(self, candidato_id: str, datos: Dict) -> bool:
+        """Actualizar campos de un candidato. Devuelve True si exitoso."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
         
         campos = []
         valores = []
-        
         for campo, valor in datos.items():
             campos.append(f"{campo} = ?")
             valores.append(valor)
         
         valores.append(candidato_id)
-        
         query = f"UPDATE candidatos SET {', '.join(campos)} WHERE id = ?"
-        cursor.execute(query, valores)
         
-        self.disconnect()
-        return cursor.rowcount > 0
+        cursor.execute(query, valores)
+        exito = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        
+        return exito
     
-    def eliminar_candidato(self, candidato_id):
-        """Archivar un candidato (no borrar)"""
-        cursor = self.connect()
+    def archivar_candidato(self, candidato_id: str) -> bool:
+        """Archivar candidato (no borrar físicamente)."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
         cursor.execute('UPDATE candidatos SET estado = "archivado" WHERE id = ?', (candidato_id,))
-        self.disconnect()
-        return cursor.rowcount > 0
+        exito = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
+        return exito
     
     # ========================================
     # CRUD VACANTES
     # ========================================
     
-    def crear_vacante(self, datos):
-        """Crear nueva vacante"""
-        cursor = self.connect()
+    def crear_vacante(self, datos: Dict) -> str:
+        """Crear nueva vacante. Devuelve ID generado."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
         
-        # Generar ID único ALV-YYYY-NNN
-        cursor.execute('SELECT COUNT(*) FROM vacantes WHERE id LIKE ?', (f"ALV-{datetime.now().year}%",))
+        # Generar ID único VAC-YYYY-NNN
+        cursor.execute('SELECT COUNT(*) FROM vacantes WHERE id LIKE ?', (f"VAC-{datetime.now().year}%",))
         count = cursor.fetchone()[0] + 1
-        vacante_id = f"ALV-{datetime.now().year}-{count:03d}"
+        vacante_id = f"VAC-{datetime.now().year}-{count:03d}"
         
         cursor.execute('''
             INSERT INTO vacantes (
-                id, titulo, perfil_it, seniority, departamento, ubicacion, modalidad,
-                stack_obligatorio, stack_deseable, experiencia_tmforum, experiencia_telecom,
-                certificaciones_requeridas, rango_salarial_min, rango_salarial_max,
-                tipo_contrato, jornada, necesidad, responsable_seleccion,
-                responsable_tecnico, hiring_manager, fecha_apertura,
-                fecha_cierre_estimada, estado, notas
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                id, titulo, departamento, ubicacion, modalidad,
+                stack_obligatorio, stack_deseable,
+                rango_salarial_min, rango_salarial_max,
+                responsable, urgencia, estado, fecha_apertura, notas
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             vacante_id,
             datos.get('titulo'),
-            datos.get('perfil_it'),
-            datos.get('seniority'),
             datos.get('departamento'),
             datos.get('ubicacion'),
             datos.get('modalidad'),
             datos.get('stack_obligatorio'),
             datos.get('stack_deseable'),
-            datos.get('experiencia_tmforum'),
-            datos.get('experiencia_telecom'),
-            datos.get('certificaciones_requeridas'),
-            datos.get('rango_salarial_min'),
-            datos.get('rango_salarial_max'),
-            datos.get('tipo_contrato'),
-            datos.get('jornada'),
-            datos.get('necesidad'),
-            datos.get('responsable_seleccion'),
-            datos.get('responsable_tecnico'),
-            datos.get('hiring_manager'),
-            datetime.now().strftime("%Y-%m-%d"),
-            datos.get('fecha_cierre_estimada'),
+            datos.get('rango_salarial_min', 0),
+            datos.get('rango_salarial_max', 0),
+            datos.get('responsable'),
+            datos.get('urgencia', 'media'),
             'abierta',
+            datetime.now().strftime("%Y-%m-%d"),
             datos.get('notas', '')
         ))
         
-        self.disconnect()
+        conn.commit()
+        conn.close()
         return vacante_id
     
-    def obtener_vacante(self, vacante_id):
-        """Obtener una vacante por ID"""
-        cursor = self.connect()
+    def obtener_vacante(self, vacante_id: str) -> Optional[Dict]:
+        """Obtener vacante por ID."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
         cursor.execute('SELECT * FROM vacantes WHERE id = ?', (vacante_id,))
-        resultado = cursor.fetchone()
-        self.disconnect()
-        return dict(resultado) if resultado else None
+        row = cursor.fetchone()
+        conn.close()
+        
+        return dict(row) if row else None
     
-    def listar_vacantes(self, estado=None, perfil_it=None):
-        """Listar vacantes con filtros"""
-        cursor = self.connect()
+    def listar_vacantes(self, estado: str = None, departamento: str = None) -> List[Dict]:
+        """Listar vacantes con filtros."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
         
         query = "SELECT * FROM vacantes"
         params = []
@@ -424,9 +499,9 @@ class DatabaseManager:
         if estado:
             condiciones.append("estado = ?")
             params.append(estado)
-        if perfil_it:
-            condiciones.append("perfil_it = ?")
-            params.append(perfil_it)
+        if departamento:
+            condiciones.append("departamento = ?")
+            params.append(departamento)
         
         if condiciones:
             query += " WHERE " + " AND ".join(condiciones)
@@ -435,281 +510,238 @@ class DatabaseManager:
         
         cursor.execute(query, params)
         resultados = cursor.fetchall()
-        self.disconnect()
+        conn.close()
         
         return [dict(row) for row in resultados]
     
-    def actualizar_vacante(self, vacante_id, datos):
-        """Actualizar vacante"""
-        cursor = self.connect()
+    def actualizar_vacante(self, vacante_id: str, datos: Dict) -> bool:
+        """Actualizar vacante."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
         
         campos = []
         valores = []
-        
         for campo, valor in datos.items():
             campos.append(f"{campo} = ?")
             valores.append(valor)
         
         valores.append(vacante_id)
-        
         query = f"UPDATE vacantes SET {', '.join(campos)} WHERE id = ?"
+        
         cursor.execute(query, valores)
+        exito = cursor.rowcount > 0
+        conn.commit()
+        conn.close()
         
-        self.disconnect()
-        return cursor.rowcount > 0
-    
-    def cerrar_vacante(self, vacante_id, candidato_seleccionado=None):
-        """Cerrar una vacante"""
-        cursor = self.connect()
-        
-        update_data = {
-            'estado': 'cerrada_cubierta' if candidato_seleccionado else 'cerrada_cancelada',
-            'fecha_cierre_real': datetime.now().strftime("%Y-%m-%d")
-        }
-        
-        if candidato_seleccionado:
-            update_data['candidato_seleccionado'] = candidato_seleccionado
-        
-        campos = [f"{k} = ?" for k in update_data.keys()]
-        valores = list(update_data.values()) + [vacante_id]
-        
-        query = f"UPDATE vacantes SET {', '.join(campos)} WHERE id = ?"
-        cursor.execute(query, valores)
-        
-        self.disconnect()
-        return True
+        return exito
     
     # ========================================
-    # EVALUACIONES R/S/T
+    # CRUD PREGUNTAS
     # ========================================
     
-    def crear_evaluacion(self, datos):
-        """Crear evaluación R/S/T"""
-        cursor = self.connect()
+    def listar_preguntas(self, categoria: str = None, subcategoria: str = None, 
+                        buscar: str = None) -> List[Dict]:
+        """Listar preguntas con filtros."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
         
-        # Calcular score final según ponderación por perfil
-        r = datos.get('r_puntuacion', 0)
-        s = datos.get('s_puntuacion', 0)
-        t = datos.get('t_puntuacion', 0)
+        query = "SELECT * FROM preguntas"
+        params = []
         
-        # Ponderación por perfil (según guía Alvatross)
-        ponderacion = {
-            'backend': (0.20, 0.60, 0.20),
-            'devops': (0.20, 0.60, 0.20),
-            'qa': (0.25, 0.50, 0.25),
-            'solution_architect': (0.25, 0.50, 0.25),
-            'product_owner': (0.30, 0.40, 0.30),
-            'integrations': (0.20, 0.60, 0.20),
-            'support': (0.30, 0.40, 0.30),
-            'frontend': (0.25, 0.50, 0.25)
-        }
+        condiciones = []
+        if categoria:
+            condiciones.append("categoria = ?")
+            params.append(categoria)
+        if subcategoria:
+            condiciones.append("subcategoria = ?")
+            params.append(subcategoria)
+        if buscar:
+            condiciones.append("(texto LIKE ? OR tags LIKE ?)")
+            buscar_param = f"%{buscar}%"
+            params.extend([buscar_param, buscar_param])
         
-        perfil = datos.get('perfil_it', 'backend')
-        p_r, p_s, p_t = ponderacion.get(perfil, (0.25, 0.50, 0.25))
+        if condiciones:
+            query += " WHERE " + " AND ".join(condiciones)
         
-        score_final = round((r * p_r) + (s * p_s) + (t * p_t), 2)
-        
-        cursor.execute('''
-            INSERT INTO evaluaciones (
-                candidato_id, vacante_id, fecha, evaluador,
-                r_puntuacion, r_notas,
-                s_puntuacion, s_notas,
-                t_puntuacion, t_notas,
-                score_final, senales_encaje, recomendacion,
-                tipo_entrevista
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
-            datos.get('candidato_id'),
-            datos.get('vacante_id'),
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            datos.get('evaluador'),
-            r, datos.get('r_notas', ''),
-            s, datos.get('s_notas', ''),
-            t, datos.get('t_notas', ''),
-            score_final,
-            datos.get('senales_encaje', ''),
-            datos.get('recomendacion', ''),
-            datos.get('tipo_entrevista', 'general')
-        ))
-        
-        # Actualizar estado del candidato si score > 7.0
-        if score_final >= 7.0:
-            self.actualizar_candidato(datos.get('candidato_id'), {'estado': 'entrevista'})
-        
-        self.disconnect()
-        return cursor.lastrowid
-    
-    def obtener_evaluaciones_candidato(self, candidato_id):
-        """Obtener historial de evaluaciones de un candidato"""
-        cursor = self.connect()
-        cursor.execute('''
-            SELECT * FROM evaluaciones 
-            WHERE candidato_id = ? 
-            ORDER BY fecha DESC
-        ''', (candidato_id,))
-        resultados = cursor.fetchall()
-        self.disconnect()
-        
-        return [dict(row) for row in resultados]
-    
-    def obtener_ultima_evaluacion(self, candidato_id, vacante_id=None):
-        """Obtener última evaluación de un candidato (opcional por vacante)"""
-        cursor = self.connect()
-        
-        if vacante_id:
-            cursor.execute('''
-                SELECT * FROM evaluaciones 
-                WHERE candidato_id = ? AND vacante_id = ?
-                ORDER BY fecha DESC LIMIT 1
-            ''', (candidato_id, vacante_id))
-        else:
-            cursor.execute('''
-                SELECT * FROM evaluaciones 
-                WHERE candidato_id = ?
-                ORDER BY fecha DESC LIMIT 1
-            ''', (candidato_id,))
-        
-        resultado = cursor.fetchone()
-        self.disconnect()
-        return dict(resultado) if resultado else None
-    
-    # ========================================
-    # INTERACCIONES
-    # ========================================
-    
-    def agregar_interaccion(self, candidato_id, tipo, responsable, notas, proximo_paso=None):
-        """Registrar una interacción con un candidato"""
-        cursor = self.connect()
-        
-        cursor.execute('''
-            INSERT INTO interacciones (
-                candidato_id, fecha, tipo, responsable, notas, proximo_paso
-            ) VALUES (?, ?, ?, ?, ?, ?)
-        ''', (
-            candidato_id,
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            tipo,
-            responsable,
-            notas,
-            proximo_paso
-        ))
-        
-        # Actualizar estado automáticamente según tipo
-        if tipo == "entrevista_tecnica":
-            self.actualizar_candidato(candidato_id, {'estado': 'entrevista_tecnica'})
-        elif tipo == "offer":
-            self.actualizar_candidato(candidato_id, {'estado': 'offer'})
-        
-        self.disconnect()
-    
-    def obtener_interacciones(self, candidato_id):
-        """Obtener historial de interacciones"""
-        cursor = self.connect()
-        cursor.execute('''
-            SELECT * FROM interacciones 
-            WHERE candidato_id = ? 
-            ORDER BY fecha DESC
-        ''', (candidato_id,))
-        resultados = cursor.fetchall()
-        self.disconnect()
-        
-        return [dict(row) for row in resultados]
-    
-    # ========================================
-    # ASOCIACIÓN CANDIDATO-VACANTE
-    # ========================================
-    
-    def asociar_candidato_vacante(self, candidato_id, vacante_id, fase='screening', notas=''):
-        """Asociar candidato a vacante"""
-        cursor = self.connect()
-        
-        cursor.execute('''
-            INSERT OR REPLACE INTO candidato_vacante (
-                candidato_id, vacante_id, fase, fecha_asignacion, notas_fase
-            ) VALUES (?, ?, ?, ?, ?)
-        ''', (
-            candidato_id,
-            vacante_id,
-            fase,
-            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            notas
-        ))
-        
-        # Incrementar contador de candidatos en vacante
-        cursor.execute('''
-            UPDATE vacantes 
-            SET candidatos_totales = candidatos_totales + 1 
-            WHERE id = ?
-        ''', (vacante_id,))
-        
-        self.disconnect()
-        return True
-    
-    def actualizar_fase_candidato(self, candidato_id, vacante_id, nueva_fase, notas=''):
-        """Actualizar fase de candidato en vacante"""
-        cursor = self.connect()
-        
-        cursor.execute('''
-            UPDATE candidato_vacante 
-            SET fase = ?, notas_fase = ?
-            WHERE candidato_id = ? AND vacante_id = ?
-        ''', (nueva_fase, notas, candidato_id, vacante_id))
-        
-        self.disconnect()
-        return cursor.rowcount > 0
-    
-    def obtener_candidatos_vacante(self, vacante_id, fase=None):
-        """Obtener candidatos asociados a una vacante"""
-        cursor = self.connect()
-        
-        query = '''
-            SELECT c.*, cv.fase, cv.notas_fase, cv.fecha_asignacion
-            FROM candidatos c
-            JOIN candidato_vacante cv ON c.id = cv.candidato_id
-            WHERE cv.vacante_id = ?
-        '''
-        params = [vacante_id]
-        
-        if fase:
-            query += " AND cv.fase = ?"
-            params.append(fase)
-        
-        query += " ORDER BY cv.fecha_asignacion DESC"
+        query += " ORDER BY categoria, subcategoria, nivel_dificultad DESC"
         
         cursor.execute(query, params)
         resultados = cursor.fetchall()
-        self.disconnect()
+        conn.close()
+        
+        return [dict(row) for row in resultados]
+    
+    def crear_pregunta(self, categoria: str, texto: str, subcategoria: str = None,
+                      nivel_dificultad: str = 'medio', tags: str = None) -> int:
+        """Crear nueva pregunta. Devuelve ID."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO preguntas (categoria, subcategoria, texto, nivel_dificultad, tags)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (categoria, subcategoria, texto, nivel_dificultad, tags))
+        
+        pregunta_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return pregunta_id
+    
+    # ========================================
+    # CRUD PERFILES EMPRESA
+    # ========================================
+    
+    def listar_perfiles_empresa(self) -> List[Dict]:
+        """Listar todos los perfiles definidos por la empresa."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM perfiles_empresa ORDER BY seniority, nombre')
+        resultados = cursor.fetchall()
+        conn.close()
         
         return [dict(row) for row in resultados]
     
     # ========================================
-    # EXPORTACIÓN
+    # CRUD ASOCIACIONES
     # ========================================
     
-    def exportar_csv_candidatos(self, ruta_salida):
-        """Exportar candidatos a CSV"""
-        candidatos = self.listar_candidatos()
+    def listar_asociaciones(self, tipo: str = None) -> List[Dict]:
+        """Listar asociaciones con filtro opcional por tipo."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
         
-        if not candidatos:
-            return False
+        if tipo:
+            cursor.execute('SELECT * FROM asociaciones WHERE tipo = ? ORDER BY nombre', (tipo,))
+        else:
+            cursor.execute('SELECT * FROM asociaciones ORDER BY tipo, nombre')
         
-        with open(ruta_salida, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=candidatos[0].keys())
-            writer.writeheader()
-            writer.writerows(candidatos)
+        resultados = cursor.fetchall()
+        conn.close()
         
-        return True
+        return [dict(row) for row in resultados]
     
-    def exportar_csv_vacantes(self, ruta_salida):
-        """Exportar vacantes a CSV"""
-        vacantes = self.listar_vacantes()
+    def crear_asociacion(self, nombre: str, tipo: str, contacto: str = None,
+                        web: str = None, notas: str = None) -> int:
+        """Crear nueva asociación."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
         
-        if not vacantes:
+        cursor.execute('''
+            INSERT INTO asociaciones (nombre, tipo, contacto, web, notas)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (nombre, tipo, contacto, web, notas))
+        
+        asociacion_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return asociacion_id
+    
+    # ========================================
+    # CRUD PORTALES EMPLEO
+    # ========================================
+    
+    def listar_portales_empleo(self) -> List[Dict]:
+        """Listar todos los portales de empleo."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM portales_empleo ORDER BY tipo, nombre')
+        resultados = cursor.fetchall()
+        conn.close()
+        
+        return [dict(row) for row in resultados]
+    
+    # ========================================
+    # CRUD TEAM BUILDING
+    # ========================================
+    
+    def listar_team_building(self, categoria: str = None) -> List[Dict]:
+        """Listar actividades de team building."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        if categoria:
+            cursor.execute('SELECT * FROM team_building WHERE categoria = ? ORDER BY nombre_actividad', (categoria,))
+        else:
+            cursor.execute('SELECT * FROM team_building ORDER BY categoria, nombre_actividad')
+        
+        resultados = cursor.fetchall()
+        conn.close()
+        
+        return [dict(row) for row in resultados]
+    
+    def listar_categorias_team_building(self) -> List[str]:
+        """Listar categorías únicas de team building."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT DISTINCT categoria FROM team_building ORDER BY categoria')
+        categorias = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return categorias
+    
+    # ========================================
+    # CRUD GLOSARIO
+    # ========================================
+    
+    def listar_glosario(self, categoria: str = None) -> List[Dict]:
+        """Listar términos del glosario."""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        
+        if categoria and categoria != 'todas':
+            cursor.execute('SELECT * FROM glosario WHERE categoria = ? ORDER BY termino', (categoria,))
+        else:
+            cursor.execute('SELECT * FROM glosario ORDER BY categoria, termino')
+        
+        resultados = cursor.fetchall()
+        conn.close()
+        
+        return [dict(row) for row in resultados]
+    
+    def listar_categorias_glosario(self) -> List[str]:
+        """Listar categorías únicas del glosario."""
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute('SELECT DISTINCT categoria FROM glosario ORDER BY categoria')
+        categorias = [row[0] for row in cursor.fetchall()]
+        conn.close()
+        return categorias
+    
+    # ========================================
+    # UTILIDADES
+    # ========================================
+    
+    def obtener_ruta_db(self) -> str:
+        """Devolver ruta absoluta de la base de datos."""
+        return str(self.db_path.absolute())
+    
+    def exportar_csv(self, tabla: str, ruta_salida: str) -> bool:
+        """Exportar cualquier tabla a CSV."""
+        import csv
+        
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute(f"SELECT * FROM {tabla}")
+            columnas = [description[0] for description in cursor.description]
+            filas = cursor.fetchall()
+            
+            with open(ruta_salida, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(columnas)
+                writer.writerows(filas)
+            
+            conn.close()
+            return True
+        except Exception as e:
+            conn.close()
+            print(f"Error exportando {tabla}: {e}")
             return False
-        
-        with open(ruta_salida, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=vacantes[0].keys())
-            writer.writeheader()
-            writer.writerows(vacantes)
-        
-        return True
