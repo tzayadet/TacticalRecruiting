@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-TalentFlow IT - Plataforma Integral de Selección y Recruiting para Perfiles IT/Telecom
-Stack: OSS/BSS, APIs estándar, Java/Spring, Kubernetes, Cloud Native
-⚠️  Ejecuta este archivo único. No requiere dependencias externas.
+App RRHH - Módulos esenciales para selección IT/Telecom
+⚠️  Ejecuta este archivo único. Sin dependencias externas.
 """
 
 import sqlite3
@@ -14,36 +13,12 @@ import sys
 
 
 # ========================================
-# CONFIGURACIÓN GLOBAL - NOMBRE APP: TalentFlow IT
-# ========================================
-
-PERFILES_IT = {
-    'backend': 'Backend / Full Stack Developer',
-    'frontend': 'Front-End Developer',
-    'devops': 'DevOps / Cloud / Security Engineer',
-    'qa': 'QA / Automation Engineer',
-    'cloud': 'Cloud Engineer',
-    'integrations': 'Integrations / API Specialist',
-    'solution_architect': 'Solution / Software Architect',
-    'product_owner': 'Product Owner / Product Manager',
-    'support': 'Operations / Support Engineer'
-}
-
-SENIORITY_NIVELES = {
-    'junior': 'Junior (1-3 años)',
-    'mid': 'Mid (3-5 años)',
-    'senior': 'Senior (5+ años)',
-    'lead': 'Lead / Manager'
-}
-
-
-# ========================================
-# INICIALIZAR BASE DE DATOS (autocontenido)
+# INICIALIZAR BASE DE DATOS
 # ========================================
 
 def inicializar_db():
-    """Crear base de datos y tablas si no existen - TODO en un solo archivo"""
-    db_path = Path("data") / "talentflow_it.db"
+    """Crear base de datos y todas las tablas necesarias"""
+    db_path = Path("data") / "rrhh_app.db"
     db_path.parent.mkdir(exist_ok=True)
     
     conn = sqlite3.connect(db_path)
@@ -61,25 +36,18 @@ def inicializar_db():
             localizacion TEXT,
             remoto TEXT,
             disponibilidad TEXT,
-            carnet_conducir BOOLEAN DEFAULT 0,
-            vehiculo_propio BOOLEAN DEFAULT 0,
             nivel_estudios TEXT,
             titulacion TEXT,
             certificaciones TEXT,
             idiomas TEXT,
             experiencia_total INTEGER DEFAULT 0,
             experiencia_telecom INTEGER DEFAULT 0,
-            experiencia_estandares TEXT,
-            ultimo_puesto TEXT,
-            ultima_empresa TEXT,
-            proyectos TEXT,
             stack_lenguajes TEXT,
             stack_frameworks TEXT,
             stack_bbdd TEXT,
             stack_cloud TEXT,
             stack_devops TEXT,
             stack_apis TEXT,
-            stack_mensajeria TEXT,
             competencias TEXT,
             salario_esperado TEXT,
             estado TEXT DEFAULT 'activo',
@@ -97,122 +65,213 @@ def inicializar_db():
         CREATE TABLE IF NOT EXISTS vacantes (
             id TEXT PRIMARY KEY,
             titulo TEXT NOT NULL,
-            perfil_it TEXT NOT NULL,
-            seniority TEXT NOT NULL,
             departamento TEXT,
             ubicacion TEXT,
             modalidad TEXT,
             stack_obligatorio TEXT NOT NULL,
             stack_deseable TEXT,
-            experiencia_estandares TEXT,
-            experiencia_telecom TEXT,
-            certificaciones_requeridas TEXT,
             rango_salarial_min INTEGER,
             rango_salarial_max INTEGER,
-            tipo_contrato TEXT,
-            jornada TEXT,
-            necesidad TEXT,
-            responsable_seleccion TEXT,
-            responsable_tecnico TEXT,
-            hiring_manager TEXT,
-            fecha_apertura TEXT NOT NULL,
-            fecha_cierre_estimada TEXT,
-            fecha_cierre_real TEXT,
-            estado TEXT DEFAULT 'abierta',
-            time_to_hire INTEGER,
-            candidatos_totales INTEGER DEFAULT 0,
-            candidatos_finalistas INTEGER DEFAULT 0,
+            responsable TEXT,
+            urgencia TEXT DEFAULT 'media',
+            candidatos_finalistas TEXT,
             candidato_seleccionado TEXT,
+            estado TEXT DEFAULT 'abierta',
+            fecha_apertura TEXT NOT NULL,
             notas TEXT
         )
     ''')
     
-    # Tabla evaluaciones R/S/T
+    # Tabla preguntas entrevista
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS evaluaciones (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            candidato_id TEXT NOT NULL,
-            vacante_id TEXT,
-            fecha TEXT NOT NULL,
-            evaluador TEXT NOT NULL,
-            r_puntuacion INTEGER DEFAULT 0,
-            r_notas TEXT,
-            s_puntuacion INTEGER DEFAULT 0,
-            s_notas TEXT,
-            t_puntuacion INTEGER DEFAULT 0,
-            t_notas TEXT,
-            score_final REAL DEFAULT 0.0,
-            senales_encaje TEXT,
-            recomendacion TEXT,
-            tipo_entrevista TEXT,
-            FOREIGN KEY (candidato_id) REFERENCES candidatos(id),
-            FOREIGN KEY (vacante_id) REFERENCES vacantes(id)
-        )
-    ''')
-    
-    # Tabla interacciones
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS interacciones (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            candidato_id TEXT NOT NULL,
-            fecha TEXT NOT NULL,
-            tipo TEXT NOT NULL,
-            responsable TEXT,
-            notas TEXT,
-            proximo_paso TEXT,
-            FOREIGN KEY (candidato_id) REFERENCES candidatos(id)
-        )
-    ''')
-    
-    # Tabla asociación candidato-vacante
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS candidato_vacante (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            candidato_id TEXT NOT NULL,
-            vacante_id TEXT NOT NULL,
-            fase TEXT DEFAULT 'screening',
-            fecha_asignacion TEXT NOT NULL,
-            notas_fase TEXT,
-            FOREIGN KEY (candidato_id) REFERENCES candidatos(id),
-            FOREIGN KEY (vacante_id) REFERENCES vacantes(id),
-            UNIQUE(candidato_id, vacante_id)
-        )
-    ''')
-    
-    # Tabla banco de preguntas (integrado)
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS preguntas_entrevista (
+        CREATE TABLE IF NOT EXISTS preguntas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             categoria TEXT NOT NULL,
             subcategoria TEXT,
             texto TEXT NOT NULL,
-            ejemplo_respuesta TEXT,
-            nivel_dificultad TEXT,
-            tags TEXT,
-            creada_por TEXT DEFAULT 'sistema'
+            nivel_dificultad TEXT DEFAULT 'medio',
+            tags TEXT
         )
     ''')
     
-    # Sembrar preguntas iniciales genéricas IT/Telecom
-    cursor.execute('SELECT COUNT(*) FROM preguntas_entrevista')
+    # Sembrar preguntas iniciales
+    cursor.execute('SELECT COUNT(*) FROM preguntas')
     if cursor.fetchone()[0] == 0:
         preguntas_iniciales = [
-            ('general', None, 'Cuéntame tu trayectoria profesional en los últimos 5 años', 'Busca narrativa coherente, progresión, motivaciones', 'medio', 'trayectoria,experiencia'),
-            ('general', None, '¿Por qué estás interesado en esta oportunidad?', 'Busca motivación real, no respuesta genérica', 'medio', 'motivación,empresa'),
-            ('general', None, '¿Qué sabes de nuestras soluciones OSS/BSS y APIs estándar?', 'Valida investigación previa sobre el core business', 'dificil', 'oss,bss,apis,investigación'),
-            ('cultural', None, 'Describe tu experiencia trabajando en equipos multidisciplinares (devs, QA, arquitectos, producto)', 'Busca colaboración real, no solo coexistencia', 'medio', 'colaboración,equipos'),
-            ('cultural', None, 'Valoramos proyectos de larga duración con clientes estables. ¿Cómo ves tu evolución profesional a 3-5 años?', 'Busca estabilidad vs. job hopping constante', 'medio', 'estabilidad,carrera'),
-            ('tecnica', 'backend', 'En un microservicio Java/Spring Boot, ¿cómo gestionarías la resiliencia ante fallos de dependencias externas?', 'Esperamos: circuit breakers, timeouts, retries con backoff exponencial', 'dificil', 'resiliencia,microservicios,spring'),
-            ('tecnica', 'devops', '¿Cómo diseñarías un pipeline CI/CD para un microservicio con requerimientos de seguridad en entornos regulados?', 'Esperamos: SAST/DAST, escaneo imágenes, secrets management', 'dificil', 'cicd,seguridad,compliance'),
-            ('tecnica', 'qa', '¿Cómo estructurarías la estrategia de testing para una API REST estándar (ej: Product Ordering)?', 'Esperamos: contrato primero, tests de contrato, idempotencia', 'dificil', 'testing,apis'),
-            ('tecnica', 'integrations', '¿Qué información es crítica en los logs de una integración con un sistema legacy de provisión?', 'Esperamos: correlation ID, payload sanitizado, timestamps', 'medio', 'logs,integración,debugging'),
-            ('tecnica', 'solution_architect', 'Un cliente exige alta disponibilidad (99.99%) para su plataforma OSS. ¿Qué elementos arquitectónicos propondrías?', 'Esperamos: multi-AZ/region, circuit breakers, rate limiting, cache layers', 'dificil', 'arquitectura,ha,escalabilidad'),
+            ('general', None, 'Cuéntame tu trayectoria profesional en los últimos 5 años', 'medio', 'trayectoria,experiencia'),
+            ('general', None, '¿Por qué estás interesado en esta oportunidad?', 'medio', 'motivación'),
+            ('tecnica', 'backend', '¿Cómo gestionarías la resiliencia ante fallos de dependencias externas en un microservicio?', 'dificil', 'resiliencia,microservicios'),
+            ('tecnica', 'devops', '¿Cómo diseñarías un pipeline CI/CD con controles de seguridad integrados?', 'dificil', 'cicd,seguridad'),
+            ('cultural', None, 'Describe tu experiencia trabajando en equipos multidisciplinares', 'medio', 'colaboración,equipos'),
+            ('situacional', None, 'Un bug crítico llega a producción. ¿Cuál es tu protocolo de actuación?', 'dificil', 'crisis,producción')
         ]
         cursor.executemany('''
-            INSERT INTO preguntas_entrevista 
-            (categoria, subcategoria, texto, ejemplo_respuesta, nivel_dificultad, tags, creada_por)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO preguntas (categoria, subcategoria, texto, nivel_dificultad, tags)
+            VALUES (?, ?, ?, ?, ?)
         ''', preguntas_iniciales)
+    
+    # Tabla perfiles empresa
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS perfiles_empresa (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            descripcion TEXT,
+            stack TEXT,
+            responsabilidades TEXT,
+            seniority TEXT,
+            salario_min INTEGER,
+            salario_max INTEGER
+        )
+    ''')
+    
+    # Sembrar perfiles IT iniciales
+    cursor.execute('SELECT COUNT(*) FROM perfiles_empresa')
+    if cursor.fetchone()[0] == 0:
+        perfiles_iniciales = [
+            ('Backend Developer', 'Desarrollo de microservicios y APIs REST', 'Java, Spring Boot, PostgreSQL, Kubernetes', 'Desarrollo módulos OSS, APIs TM Forum, integración sistemas', 'mid', 35000, 50000),
+            ('DevOps Engineer', 'Automatización de despliegues y operaciones', 'Docker, Kubernetes, AWS/Azure, Terraform, GitLab CI', 'Pipelines CI/CD, infraestructura cloud, monitorización', 'mid', 40000, 55000),
+            ('QA Automation Engineer', 'Aseguramiento de calidad mediante pruebas automatizadas', 'Selenium, Cypress, JUnit, Postman, Jenkins', 'Diseño planes prueba, automatización APIs, colaboración con devs', 'mid', 32000, 45000)
+        ]
+        cursor.executemany('''
+            INSERT INTO perfiles_empresa (nombre, descripcion, stack, responsabilidades, seniority, salario_min, salario_max)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', perfiles_iniciales)
+    
+    # Tabla asociaciones colaboración
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS asociaciones (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            tipo TEXT NOT NULL,
+            contacto TEXT,
+            web TEXT,
+            notas TEXT
+        )
+    ''')
+    
+    # Sembrar asociaciones iniciales
+    cursor.execute('SELECT COUNT(*) FROM asociaciones')
+    if cursor.fetchone()[0] == 0:
+        asociaciones_iniciales = [
+            ('Inserta', 'discapacidad', 'info@inserta.es', 'https://www.inserta.es', 'Fundación ONCE para inserción laboral personas con discapacidad'),
+            ('Fundación Adecco', 'discapacidad', 'info@fundacionadecco.es', 'https://www.fundacionadecco.es', 'Inserción laboral colectivos vulnerables'),
+            ('Mujeres Tech', 'mujeres', 'contacto@mujerestech.es', 'https://mujerestech.es', 'Comunidad mujeres en tecnología'),
+            ('AdaLab', 'mujeres', 'hola@adalab.es', 'https://adalab.es', 'Formación tecnológica para mujeres')
+        ]
+        cursor.executemany('''
+            INSERT INTO asociaciones (nombre, tipo, contacto, web, notas)
+            VALUES (?, ?, ?, ?, ?)
+        ''', asociaciones_iniciales)
+    
+    # Tabla centros prácticas
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS centros_practicas (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            tipo TEXT,
+            contacto TEXT,
+            web TEXT,
+            convenio_activo BOOLEAN DEFAULT 0
+        )
+    ''')
+    
+    # Tabla portales empleo
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS portales_empleo (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            url TEXT,
+            tipo TEXT,
+            coste TEXT,
+            notas TEXT
+        )
+    ''')
+    
+    # Sembrar portales iniciales
+    cursor.execute('SELECT COUNT(*) FROM portales_empleo')
+    if cursor.fetchone()[0] == 0:
+        portales_iniciales = [
+            ('LinkedIn Jobs', 'https://linkedin.com/jobs', 'general', 'Premium Recruiter', 'Alta visibilidad IT'),
+            ('InfoJobs', 'https://www.infojobs.net', 'general', 'Bolsa completa', 'Alto volumen candidatos España'),
+            ('Tecnoempleo', 'https://www.tecnoempleo.com', 'IT', 'Gratuito/Pro', 'Especializado IT/Telecom'),
+            ('Stack Overflow Jobs', 'https://stackoverflow.com/jobs', 'IT', 'Gratuito', 'Talento técnico senior'),
+            ('GitHub Jobs', 'https://jobs.github.com', 'IT', 'Gratuito', 'Desarrolladores open source')
+        ]
+        cursor.executemany('''
+            INSERT INTO portales_empleo (nombre, url, tipo, coste, notas)
+            VALUES (?, ?, ?, ?, ?)
+        ''', portales_iniciales)
+    
+    # Tabla plantillas vacantes
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS plantillas_vacantes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            titulo TEXT NOT NULL,
+            contenido TEXT NOT NULL,
+            departamento TEXT,
+            ultima_actualizacion TEXT
+        )
+    ''')
+    
+    # Tabla team building
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS team_building (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            categoria TEXT NOT NULL,
+            nombre_actividad TEXT NOT NULL,
+            empresa_proveedora TEXT,
+            precio_estimado TEXT,
+            duracion TEXT,
+            participantes_min INTEGER,
+            participantes_max INTEGER,
+            notas TEXT
+        )
+    ''')
+    
+    # Sembrar actividades iniciales
+    cursor.execute('SELECT COUNT(*) FROM team_building')
+    if cursor.fetchone()[0] == 0:
+        actividades_iniciales = [
+            ('deporte', 'Escape Room Tecnológico', 'EscapeKings', '25€/persona', '2 horas', 4, 8, 'Resolución problemas en equipo con temática ciberseguridad'),
+            ('gastronomia', 'Taller de cocina colaborativa', 'Cook&Team', '45€/persona', '3 horas', 6, 20, 'Elaboración menú completo en equipos rotativos'),
+            ('naturaleza', 'Ruta senderismo + picnic', 'AireLibre', '15€/persona', '5 horas', 10, 30, 'Ruta guiada por Sierra de Guadarrama'),
+            ('cultura', 'Visita guiada Museo Reina Sofía + taller', 'ArteEnEquipo', '20€/persona', '4 horas', 8, 25, 'Recorrido obras + taller creatividad'),
+            ('solidaridad', 'Voluntariado huerto urbano', 'HuertosSolidarios', 'Donación', '3 horas', 5, 15, 'Mantenimiento huerto para comedores sociales')
+        ]
+        cursor.executemany('''
+            INSERT INTO team_building (categoria, nombre_actividad, empresa_proveedora, precio_estimado, duracion, participantes_min, participantes_max, notas)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', actividades_iniciales)
+    
+    # Tabla glosario
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS glosario (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            termino TEXT NOT NULL UNIQUE,
+            definicion TEXT NOT NULL,
+            categoria TEXT
+        )
+    ''')
+    
+    # Sembrar términos iniciales
+    cursor.execute('SELECT COUNT(*) FROM glosario')
+    if cursor.fetchone()[0] == 0:
+        terminos_iniciales = [
+            ('API', 'Application Programming Interface: interfaz que permite la comunicación entre sistemas', 'técnico'),
+            ('DevOps', 'Cultura y conjunto de prácticas que unen desarrollo y operaciones para acelerar entregas', 'metodologia'),
+            ('GDPR', 'Reglamento General de Protección de Datos de la UE. Marco legal para tratamiento datos personales', 'legal'),
+            ('Kanban', 'Método ágil de gestión visual del trabajo con límites WIP (Work In Progress)', 'metodologia'),
+            ('Microservicios', 'Arquitectura de software donde una aplicación se estructura como conjunto de servicios pequeños e independientes', 'técnico'),
+            ('ODA', 'Open Digital Architecture: marco de referencia de TM Forum para arquitecturas digitales abiertas', 'telecom'),
+            ('OSS', 'Operational Support Systems: sistemas que gestionan operaciones de red y servicios en telecomunicaciones', 'telecom'),
+            ('Scrum', 'Framework ágil con sprints, roles definidos (PO, SM, Dev Team) y ceremonias estructuradas', 'metodologia'),
+            ('SLA', 'Service Level Agreement: acuerdo de nivel de servicio que define expectativas entre proveedor y cliente', 'legal'),
+            ('Time to Hire', 'Métrica RRHH: tiempo transcurrido desde apertura vacante hasta aceptación oferta', 'rrhh')
+        ]
+        cursor.executemany('''
+            INSERT INTO glosario (termino, definicion, categoria)
+            VALUES (?, ?, ?)
+        ''', terminos_iniciales)
     
     conn.commit()
     conn.close()
@@ -232,15 +291,41 @@ def pausa():
 
 
 # ========================================
-# CRUD CANDIDATOS
+# MÓDULO 1: BASE DE DATOS CANDIDATOS
 # ========================================
 
-def crear_candidato(db_path):
+def modulo_candidatos(db_path):
+    while True:
+        limpiar_pantalla()
+        print("=" * 70)
+        print("   👥 BASE DE DATOS DE CANDIDATOS")
+        print("=" * 70)
+        print("\n1. 🆕 Registrar nuevo candidato")
+        print("2. 🔍 Buscar/Listar candidatos")
+        print("3. 👁️  Ver detalle de candidato")
+        print("0. ⬅️  Volver al menú principal")
+        print("-" * 70)
+        
+        opcion = input("\n➤ Opción: ").strip()
+        
+        if opcion == "1":
+            registrar_candidato(db_path)
+        elif opcion == "2":
+            listar_candidatos(db_path)
+        elif opcion == "3":
+            ver_detalle_candidato(db_path)
+        elif opcion == "0":
+            break
+        else:
+            print("\n⚠️  Opción no válida.")
+            pausa()
+
+
+def registrar_candidato(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   🆕 REGISTRAR NUEVO CANDIDATO - TalentFlow IT")
+    print("   🆕 REGISTRAR NUEVO CANDIDATO")
     print("=" * 70)
-    print("\n💡 Stack especializado: APIs estándar, OSS/BSS, Java/Spring, Kubernetes")
     
     datos = {}
     while not datos.get('nombre'):
@@ -251,16 +336,14 @@ def crear_candidato(db_path):
     datos['email'] = input("Email: ").strip()
     datos['telefono'] = input("Teléfono: ").strip()
     datos['linkedin'] = input("LinkedIn URL: ").strip()
-    datos['github'] = input("GitHub/GitLab URL: ").strip()
+    datos['github'] = input("GitHub URL: ").strip()
     datos['localizacion'] = input("Ciudad/Provincia: ").strip()
     datos['remoto'] = input("Disponibilidad remoto (Total/Parcial/Presencial): ").strip()
-    datos['disponibilidad'] = input("Disponibilidad incorporación (Inmediata/15d/30d/60d+): ").strip()
-    datos['carnet_conducir'] = 1 if input("¿Carnet de conducir? (S/n): ").strip().lower() in ('s', 'si', 'y', 'yes', '') else 0
-    datos['vehiculo_propio'] = 1 if input("¿Vehículo propio? (S/n): ").strip().lower() in ('s', 'si', 'y', 'yes', '') else 0
-    datos['nivel_estudios'] = input("Nivel de estudios (Grado/Máster/FP/Doctorado): ").strip()
+    datos['disponibilidad'] = input("Disponibilidad incorporación: ").strip()
+    datos['nivel_estudios'] = input("Nivel de estudios: ").strip()
     datos['titulacion'] = input("Titulación específica: ").strip()
-    datos['certificaciones'] = input("Certificaciones relevantes (AWS, Azure, ISO27001...): ").strip()
-    datos['idiomas'] = input("Idiomas (ej: Inglés C1, Francés B2): ").strip()
+    datos['certificaciones'] = input("Certificaciones relevantes: ").strip()
+    datos['idiomas'] = input("Idiomas: ").strip()
     
     try:
         datos['experiencia_total'] = int(input("Años totales en IT: ").strip() or "0")
@@ -272,38 +355,25 @@ def crear_candidato(db_path):
     except ValueError:
         datos['experiencia_telecom'] = 0
     
-    datos['ultimo_puesto'] = input("Último puesto: ").strip()
-    datos['ultima_empresa'] = input("Última empresa: ").strip()
-    datos['proyectos'] = input("Proyectos relevantes (breve): ").strip()
-    datos['experiencia_estandares'] = input("Experiencia con APIs estándar/ODA (Sí/No/Nivel): ").strip()
     datos['stack_lenguajes'] = input("Lenguajes (ej: Java, Python, TypeScript): ").strip()
     datos['stack_frameworks'] = input("Frameworks (ej: Spring Boot, Angular, React): ").strip()
-    datos['stack_bbdd'] = input("Bases de datos (Oracle, PostgreSQL, MongoDB...): ").strip()
+    datos['stack_bbdd'] = input("Bases de datos: ").strip()
     datos['stack_cloud'] = input("Cloud (AWS/Azure/GCP): ").strip()
-    datos['stack_devops'] = input("DevOps (Docker, Kubernetes, Terraform...): ").strip()
-    datos['stack_apis'] = input("APIs/Integración (REST, SOAP, GraphQL...): ").strip()
-    datos['stack_mensajeria'] = input("Mensajería (Kafka, RabbitMQ...): ").strip()
-    datos['competencias'] = input("Competencias blandas (ej: Ownership, Comunicación técnica): ").strip()
+    datos['stack_devops'] = input("DevOps (Docker, Kubernetes...): ").strip()
+    datos['stack_apis'] = input("APIs/Integración: ").strip()
+    datos['competencias'] = input("Competencias blandas: ").strip()
     datos['salario_esperado'] = input("Expectativa salarial (k€): ").strip()
     
     print("\nPerfiles IT:")
-    for key, value in PERFILES_IT.items():
-        print(f"  {key:20} - {value}")
-    datos['perfil_it'] = input("\nPerfil IT*: ").strip().lower()
-    while datos['perfil_it'] not in PERFILES_IT:
-        print("⚠️  Perfil no válido. Elige uno de la lista anterior.")
-        datos['perfil_it'] = input("Perfil IT*: ").strip().lower()
+    print("  backend | devops | qa | integrations | frontend | other")
+    datos['perfil_it'] = input("\nPerfil IT: ").strip().lower()
     
     print("\nSeniority:")
-    for key, value in SENIORITY_NIVELES.items():
-        print(f"  {key:10} - {value}")
-    datos['seniority'] = input("\nSeniority*: ").strip().lower()
-    while datos['seniority'] not in SENIORITY_NIVELES:
-        print("⚠️  Seniority no válido. Elige uno de la lista.")
-        datos['seniority'] = input("Seniority*: ").strip().lower()
+    print("  junior | mid | senior | lead")
+    datos['seniority'] = input("\nSeniority: ").strip().lower()
     
-    datos['notas'] = input("\nNotas iniciales (stack específico, proyectos OSS/BSS...): ").strip()
-    gdpr = input("\n✅ ¿Consentimiento GDPR registrado? (S/n): ").strip().lower()
+    datos['notas'] = input("\nNotas iniciales: ").strip()
+    gdpr = input("\n✅ Consentimiento GDPR registrado? (S/n): ").strip().lower()
     datos['gdpr_consent'] = 1 if gdpr in ('', 's', 'si', 'yes') else 0
     
     # Guardar en BD
@@ -314,16 +384,14 @@ def crear_candidato(db_path):
     cursor.execute('''
         INSERT INTO candidatos (
             id, nombre, email, telefono, linkedin, github, localizacion,
-            remoto, disponibilidad, carnet_conducir, vehiculo_propio,
-            nivel_estudios, titulacion, certificaciones, idiomas,
-            experiencia_total, experiencia_telecom, experiencia_estandares,
-            ultimo_puesto, ultima_empresa, proyectos,
+            remoto, disponibilidad, nivel_estudios, titulacion, certificaciones,
+            idiomas, experiencia_total, experiencia_telecom,
             stack_lenguajes, stack_frameworks, stack_bbdd, stack_cloud,
-            stack_devops, stack_apis, stack_mensajeria,
-            competencias, salario_esperado, estado, perfil_it, seniority,
-            gdpr_consent, fecha_registro, origen, notas
+            stack_devops, stack_apis, competencias, salario_esperado,
+            estado, perfil_it, seniority, gdpr_consent, fecha_registro,
+            origen, notas
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         candidato_id,
         datos['nombre'],
@@ -334,30 +402,23 @@ def crear_candidato(db_path):
         datos.get('localizacion'),
         datos.get('remoto'),
         datos.get('disponibilidad'),
-        datos['carnet_conducir'],
-        datos['vehiculo_propio'],
         datos.get('nivel_estudios'),
         datos.get('titulacion'),
         datos.get('certificaciones'),
         datos.get('idiomas'),
         datos['experiencia_total'],
         datos['experiencia_telecom'],
-        datos.get('experiencia_estandares'),
-        datos.get('ultimo_puesto'),
-        datos.get('ultima_empresa'),
-        datos.get('proyectos'),
         datos.get('stack_lenguajes'),
         datos.get('stack_frameworks'),
         datos.get('stack_bbdd'),
         datos.get('stack_cloud'),
         datos.get('stack_devops'),
         datos.get('stack_apis'),
-        datos.get('stack_mensajeria'),
         datos.get('competencias'),
         datos.get('salario_esperado'),
         'activo',
-        datos['perfil_it'],
-        datos['seniority'],
+        datos.get('perfil_it'),
+        datos.get('seniority'),
         datos['gdpr_consent'],
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         'manual',
@@ -370,24 +431,22 @@ def crear_candidato(db_path):
     print(f"\n✅ Candidato registrado correctamente")
     print(f"   ID: {candidato_id}")
     print(f"   Nombre: {datos['nombre']}")
-    print(f"   Perfil: {PERFILES_IT[datos['perfil_it']]} ({datos['seniority'].upper()})")
-    print(f"   Stack: {datos['stack_lenguajes'] or 'Sin especificar'}")
     pausa()
 
 
 def listar_candidatos(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   🔍 LISTAR CANDIDATOS - TalentFlow IT")
+    print("   🔍 LISTAR CANDIDATOS")
     print("=" * 70)
     
     buscar = input("\nBuscar (nombre, stack, puesto) - Deja en blanco para todos: ").strip()
-    estado = input("Filtrar por estado (activo/screening/entrevista/offer/descartado) - Deja en blanco: ").strip().lower() or None
+    estado = input("Filtrar por estado (activo/inactivo) - Deja en blanco: ").strip().lower() or None
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    query = "SELECT id, nombre, email, telefono, ultimo_puesto, stack_lenguajes, perfil_it, seniority, estado, fecha_registro FROM candidatos WHERE estado != 'archivado'"
+    query = "SELECT id, nombre, email, telefono, stack_lenguajes, perfil_it, seniority, estado FROM candidatos WHERE estado != 'archivado'"
     params = []
     
     if estado:
@@ -395,9 +454,9 @@ def listar_candidatos(db_path):
         params.append(estado)
     
     if buscar:
-        query += " AND (nombre LIKE ? OR stack_lenguajes LIKE ? OR ultimo_puesto LIKE ?)"
+        query += " AND (nombre LIKE ? OR stack_lenguajes LIKE ?)"
         buscar_param = f"%{buscar}%"
-        params.extend([buscar_param, buscar_param, buscar_param])
+        params.extend([buscar_param, buscar_param])
     
     query += " ORDER BY fecha_registro DESC"
     cursor.execute(query, params)
@@ -410,13 +469,12 @@ def listar_candidatos(db_path):
         return
     
     print(f"\n📊 Encontrados: {len(resultados)} candidatos\n")
-    print(f"{'ID':<15} {'Nombre':<25} {'Puesto':<20} {'Perfil':<20} {'Seniority':<10} {'Estado':<12}")
-    print("-" * 100)
+    print(f"{'ID':<15} {'Nombre':<25} {'Email':<30} {'Perfil':<15} {'Seniority':<10}")
+    print("-" * 95)
     
     for row in resultados:
-        perfil = PERFILES_IT.get(row[6], row[6])[:20] if row[6] else '-'
-        print(f"{row[0]:<15} {row[1][:23]:<25} {row[4][:18] if row[4] else '-':<20} "
-              f"{perfil:<20} {row[7] or '-':<10} {row[8]:<12}")
+        print(f"{row[0]:<15} {row[1][:23]:<25} {row[2][:28] if row[2] else '-':<30} "
+              f"{row[5] or '-':<15} {row[6] or '-':<10}")
     
     pausa()
 
@@ -441,9 +499,7 @@ def ver_detalle_candidato(db_path):
         pausa()
         return
     
-    # Mostrar datos completos
-    print(f"\n{'='*70}")
-    print(f"📄 FICHA COMPLETA: {candidato['nombre']}")
+    print(f"\n📄 FICHA COMPLETA: {candidato['nombre']}")
     print(f"{'='*70}")
     print(f"ID:          {candidato['id']}")
     print(f"Email:       {candidato['email'] or '-'}")
@@ -452,7 +508,6 @@ def ver_detalle_candidato(db_path):
     print(f"GitHub:      {candidato['github'] or '-'}")
     print(f"📍 Ubicación: {candidato['localizacion'] or '-'} | Remoto: {candidato['remoto'] or '-'}")
     print(f"📅 Incorporación: {candidato['disponibilidad'] or '-'}")
-    print(f"🚗 Carnet: {'Sí' if candidato['carnet_conducir'] else 'No'} | Vehículo: {'Sí' if candidato['vehiculo_propio'] else 'No'}")
     
     print(f"\n🎓 Formación:")
     print(f"   Estudios:    {candidato['nivel_estudios'] or '-'}")
@@ -462,10 +517,7 @@ def ver_detalle_candidato(db_path):
     
     print(f"\n💼 Experiencia:")
     print(f"   Total IT:    {candidato['experiencia_total']} años")
-    print(f"   Telecom OSS/BSS: {candidato['experiencia_telecom']} años")
-    print(f"   Último puesto: {candidato['ultimo_puesto'] or '-'} en {candidato['ultima_empresa'] or '-'}")
-    print(f"   APIs estándar/ODA: {candidato['experiencia_estandares'] or 'Sin experiencia'}")
-    print(f"   Proyectos:   {candidato['proyectos'] or '-'}")
+    print(f"   Telecom:     {candidato['experiencia_telecom']} años")
     
     print(f"\n🛠️  Stack técnico:")
     print(f"   Lenguajes:   {candidato['stack_lenguajes'] or '-'}")
@@ -474,60 +526,58 @@ def ver_detalle_candidato(db_path):
     print(f"   Cloud:       {candidato['stack_cloud'] or '-'}")
     print(f"   DevOps:      {candidato['stack_devops'] or '-'}")
     print(f"   APIs:        {candidato['stack_apis'] or '-'}")
-    print(f"   Mensajería:  {candidato['stack_mensajeria'] or '-'}")
     
     print(f"\n🌟 Competencias: {candidato['competencias'] or '-'}")
-    
-    print(f"\n💰 Salario esperado: {candidato['salario_esperado'] or '-'}")
-    print(f"👤 Perfil IT: {PERFILES_IT.get(candidato['perfil_it'], candidato['perfil_it'] or '-')}")
-    print(f"⭐ Seniority: {SENIORITY_NIVELES.get(candidato['seniority'], candidato['seniority'] or '-')}")
+    print(f"💰 Salario esperado: {candidato['salario_esperado'] or '-'}")
+    print(f"👤 Perfil IT: {candidato['perfil_it'] or '-'}")
+    print(f"⭐ Seniority: {candidato['seniority'] or '-'}")
     
     print(f"\n📝 Notas:")
     print(f"   {candidato['notas'] or '-'}")
     
     print(f"\n🛡️  GDPR: {'✅ Consentimiento registrado' if candidato['gdpr_consent'] else '⚠️  Pendiente'}")
-    print(f"📅 Registro:  {candidato['fecha_registro']}")
-    print(f"🔍 Origen:     {candidato['origen']}")
-    print(f"🏷️  Estado:    {candidato['estado']}")
-    
-    # Mostrar historial de evaluaciones R/S/T
-    print(f"\n{'='*70}")
-    print("📊 EVALUACIONES R/S/T - Sistema TalentFlow")
-    print(f"{'='*70}")
-    
-    cursor.execute('''
-        SELECT * FROM evaluaciones 
-        WHERE candidato_id = ? 
-        ORDER BY fecha DESC
-    ''', (cid,))
-    evaluaciones = cursor.fetchall()
-    
-    if not evaluaciones:
-        print("📭 Sin evaluaciones registradas aún.")
-    else:
-        for e in evaluaciones:
-            print(f"\n[{e['fecha']}] Evaluador: {e['evaluador']}")
-            print(f"   R (Comunicación): {e['r_puntuacion']}/10 | {e['r_notas'] or '-'}")
-            print(f"   S (Técnica):      {e['s_puntuacion']}/10 | {e['s_notas'] or '-'}")
-            print(f"   T (Cultural):     {e['t_puntuacion']}/10 | {e['t_notas'] or '-'}")
-            print(f"   ➤ Score final:    {e['score_final']} | Recomendación: {e['recomendacion']}")
-            if e['senales_encaje']:
-                print(f"   ✅ Señales: {e['senales_encaje']}")
+    print(f"📅 Registro: {candidato['fecha_registro']}")
     
     conn.close()
     pausa()
 
 
 # ========================================
-# CRUD VACANTES
+# MÓDULO 2: SELECCIÓN DE LA EMPRESA (VACANTES)
 # ========================================
+
+def modulo_vacantes(db_path):
+    while True:
+        limpiar_pantalla()
+        print("=" * 70)
+        print("   💼 SELECCIÓN DE LA EMPRESA - VACANTES")
+        print("=" * 70)
+        print("\n1. ➕ Crear nueva vacante")
+        print("2. 📋 Listar vacantes")
+        print("3. 👁️  Ver detalle de vacante")
+        print("0. ⬅️  Volver al menú principal")
+        print("-" * 70)
+        
+        opcion = input("\n➤ Opción: ").strip()
+        
+        if opcion == "1":
+            crear_vacante(db_path)
+        elif opcion == "2":
+            listar_vacantes(db_path)
+        elif opcion == "3":
+            ver_detalle_vacante(db_path)
+        elif opcion == "0":
+            break
+        else:
+            print("\n⚠️  Opción no válida.")
+            pausa()
+
 
 def crear_vacante(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   ➕ CREAR NUEVA VACANTE - TalentFlow IT")
+    print("   ➕ CREAR NUEVA VACANTE")
     print("=" * 70)
-    print("\n💡 Stack especializado: APIs estándar, OSS/BSS, cloud-native")
     
     datos = {}
     datos['titulo'] = input("\nTítulo del puesto*: ").strip()
@@ -535,106 +585,65 @@ def crear_vacante(db_path):
         print("⚠️  El título es obligatorio")
         datos['titulo'] = input("Título del puesto*: ").strip()
     
-    print("\nPerfiles IT:")
-    for key, value in PERFILES_IT.items():
-        print(f"  {key:20} - {value}")
-    datos['perfil_it'] = input("\nPerfil IT*: ").strip().lower()
-    while datos['perfil_it'] not in PERFILES_IT:
-        print("⚠️  Perfil no válido")
-        datos['perfil_it'] = input("Perfil IT*: ").strip().lower()
-    
-    print("\nSeniority:")
-    for key, value in SENIORITY_NIVELES.items():
-        print(f"  {key:10} - {value}")
-    datos['seniority'] = input("\nSeniority*: ").strip().lower()
-    while datos['seniority'] not in SENIORITY_NIVELES:
-        print("⚠️  Seniority no válido")
-        datos['seniority'] = input("Seniority*: ").strip().lower()
-    
-    datos['departamento'] = input("Departamento (Desarrollo/DevOps/Producto/Arquitectura/Operaciones): ").strip()
+    datos['departamento'] = input("Departamento: ").strip()
     datos['ubicacion'] = input("Ubicación (Madrid/Avilés/Remoto): ").strip()
     datos['modalidad'] = input("Modalidad (Remoto_Total/Remoto_Parcial/Presencial): ").strip()
-    
-    print("\n--- Requisitos técnicos ---")
-    datos['stack_obligatorio'] = input("Stack obligatorio* (ej: Java/Spring Boot, APIs REST, Kubernetes): ").strip()
+    datos['stack_obligatorio'] = input("Stack obligatorio*: ").strip()
     while not datos['stack_obligatorio']:
         print("⚠️  El stack obligatorio es obligatorio")
         datos['stack_obligatorio'] = input("Stack obligatorio*: ").strip()
     
-    datos['stack_deseable'] = input("Stack deseable (ej: AWS, Kafka, Terraform): ").strip()
-    datos['experiencia_estandares'] = input("Experiencia APIs estándar/ODA (Obligatorio/Deseable/No_relevante): ").strip()
-    datos['experiencia_telecom'] = input("Experiencia Telecom OSS/BSS (Obligatorio/Deseable/No_relevante): ").strip()
-    datos['certificaciones_requeridas'] = input("Certificaciones requeridas (ej: AWS/Azure, ISO27001): ").strip()
+    datos['stack_deseable'] = input("Stack deseable: ").strip()
     
-    print("\n--- Condiciones de contratación ---")
     try:
         datos['rango_salarial_min'] = int(input("Rango salarial mínimo (k€)*: ").strip())
     except ValueError:
-        print("⚠️  Valor numérico requerido. Usando 0.")
         datos['rango_salarial_min'] = 0
     
     try:
         datos['rango_salarial_max'] = int(input("Rango salarial máximo (k€)*: ").strip())
     except ValueError:
-        print("⚠️  Valor numérico requerido. Usando 0.")
         datos['rango_salarial_max'] = 0
     
-    datos['tipo_contrato'] = input("Tipo de contrato (Indefinido/Temporal): ").strip()
-    datos['jornada'] = input("Jornada (Completa/Parcial): ").strip()
-    datos['necesidad'] = input("Tipo de necesidad (Nueva/Reemplazo): ").strip()
-    
-    print("\n--- Stakeholders ---")
-    datos['responsable_seleccion'] = input("Responsable de selección (RRHH)*: ").strip()
-    while not datos['responsable_seleccion']:
+    datos['responsable'] = input("Responsable de selección*: ").strip()
+    while not datos['responsable']:
         print("⚠️  El responsable es obligatorio")
-        datos['responsable_seleccion'] = input("Responsable de selección (RRHH)*: ").strip()
+        datos['responsable'] = input("Responsable de selección*: ").strip()
     
-    datos['responsable_tecnico'] = input("Responsable técnico (Tech Lead/Arquitecto): ").strip()
-    datos['hiring_manager'] = input("Hiring Manager (Jefe de Área): ").strip()
+    print("\nUrgencia:")
+    print("  alta | media | baja")
+    datos['urgencia'] = input("Urgencia: ").strip().lower() or 'media'
     
-    datos['fecha_cierre_estimada'] = input("\nFecha cierre estimada (YYYY-MM-DD, opcional): ").strip()
-    datos['notas'] = input("Notas adicionales (stack específico, cliente...): ").strip()
+    datos['notas'] = input("\nNotas adicionales: ").strip()
     
     # Generar ID único
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM vacantes WHERE id LIKE ?', (f"TF-{datetime.now().year}%",))
+    cursor.execute('SELECT COUNT(*) FROM vacantes WHERE id LIKE ?', (f"VAC-{datetime.now().year}%",))
     count = cursor.fetchone()[0] + 1
-    vacante_id = f"TF-{datetime.now().year}-{count:03d}"
+    vacante_id = f"VAC-{datetime.now().year}-{count:03d}"
     
     cursor.execute('''
         INSERT INTO vacantes (
-            id, titulo, perfil_it, seniority, departamento, ubicacion, modalidad,
-            stack_obligatorio, stack_deseable, experiencia_estandares, experiencia_telecom,
-            certificaciones_requeridas, rango_salarial_min, rango_salarial_max,
-            tipo_contrato, jornada, necesidad, responsable_seleccion,
-            responsable_tecnico, hiring_manager, fecha_apertura,
-            fecha_cierre_estimada, estado, notas
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            id, titulo, departamento, ubicacion, modalidad,
+            stack_obligatorio, stack_deseable,
+            rango_salarial_min, rango_salarial_max,
+            responsable, urgencia, estado, fecha_apertura, notas
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         vacante_id,
         datos['titulo'],
-        datos['perfil_it'],
-        datos['seniority'],
         datos.get('departamento'),
         datos.get('ubicacion'),
         datos.get('modalidad'),
         datos['stack_obligatorio'],
         datos.get('stack_deseable'),
-        datos.get('experiencia_estandares'),
-        datos.get('experiencia_telecom'),
-        datos.get('certificaciones_requeridas'),
         datos['rango_salarial_min'],
         datos['rango_salarial_max'],
-        datos.get('tipo_contrato'),
-        datos.get('jornada'),
-        datos.get('necesidad'),
-        datos['responsable_seleccion'],
-        datos.get('responsable_tecnico'),
-        datos.get('hiring_manager'),
-        datetime.now().strftime("%Y-%m-%d"),
-        datos.get('fecha_cierre_estimada'),
+        datos['responsable'],
+        datos['urgencia'],
         'abierta',
+        datetime.now().strftime("%Y-%m-%d"),
         datos.get('notas', '')
     ))
     
@@ -644,23 +653,21 @@ def crear_vacante(db_path):
     print(f"\n✅ Vacante creada correctamente")
     print(f"   ID: {vacante_id}")
     print(f"   Puesto: {datos['titulo']}")
-    print(f"   Perfil: {PERFILES_IT[datos['perfil_it']]} ({datos['seniority'].upper()})")
-    print(f"   Stack: {datos['stack_obligatorio']}")
     pausa()
 
 
 def listar_vacantes(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   📋 LISTAR VACANTES - TalentFlow IT")
+    print("   📋 LISTAR VACANTES")
     print("=" * 70)
     
-    estado = input("\nFiltrar por estado (abierta/cerrada_cubierta/cerrada_cancelada) - Deja en blanco para todas: ").strip().lower() or None
+    estado = input("\nFiltrar por estado (abierta/cerrada) - Deja en blanco para todas: ").strip().lower() or None
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    query = "SELECT id, titulo, perfil_it, seniority, ubicacion, estado, stack_obligatorio FROM vacantes"
+    query = "SELECT id, titulo, departamento, ubicacion, urgencia, estado FROM vacantes"
     params = []
     
     if estado:
@@ -678,181 +685,80 @@ def listar_vacantes(db_path):
         return
     
     print(f"\n📊 Encontradas: {len(resultados)} vacantes\n")
-    print(f"{'ID':<15} {'Título':<30} {'Perfil':<20} {'Ubicación':<15} {'Estado':<15}")
-    print("-" * 95)
+    print(f"{'ID':<15} {'Título':<30} {'Departamento':<20} {'Ubicación':<15} {'Urgencia':<10} {'Estado':<10}")
+    print("-" * 100)
     
     for row in resultados:
-        perfil = PERFILES_IT.get(row[2], row[2])[:20]
-        print(f"{row[0]:<15} {row[1][:28]:<30} {perfil:<20} {row[4] or '-':<15} {row[5]:<15}")
+        print(f"{row[0]:<15} {row[1][:28]:<30} {row[2] or '-':<20} {row[3] or '-':<15} {row[4]:<10} {row[5]:<10}")
     
     pausa()
 
 
-# ========================================
-# EVALUACIONES R/S/T - Sistema TalentFlow
-# ========================================
-
-def crear_evaluacion(db_path):
+def ver_detalle_vacante(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   ➕ NUEVA EVALUACIÓN R/S/T - Sistema TalentFlow")
+    print("   👁️  DETALLE DE VACANTE")
     print("=" * 70)
-    print("\n📌 R = Entrevista/Comunicación | S = Técnica/Stack | T = Cultural/Soft Skills")
     
-    cid = input("\nID del candidato: ").strip()
+    vid = input("\nID de la vacante: ").strip()
     conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    cursor.execute('SELECT nombre, perfil_it FROM candidatos WHERE id = ?', (cid,))
-    candidato = cursor.fetchone()
     
-    if not candidato:
+    cursor.execute('SELECT * FROM vacantes WHERE id = ?', (vid,))
+    vacante = cursor.fetchone()
+    
+    if not vacante:
         conn.close()
-        print("\n❌ Candidato no encontrado.")
+        print("\n❌ Vacante no encontrada.")
         pausa()
         return
     
-    print(f"\nCandidato: {candidato[0]}")
-    print(f"Perfil: {PERFILES_IT.get(candidato[1], candidato[1])}")
+    print(f"\n💼 VACANTE: {vacante['titulo']}")
+    print(f"{'='*70}")
+    print(f"ID:          {vacante['id']}")
+    print(f"Departamento:{vacante['departamento'] or '-'}")
+    print(f"Ubicación:   {vacante['ubicacion'] or '-'} | Modalidad: {vacante['modalidad'] or '-'}")
     
-    vid = input("\nID de la vacante (opcional): ").strip()
-    if vid:
-        cursor.execute('SELECT titulo FROM vacantes WHERE id = ?', (vid,))
-        vacante = cursor.fetchone()
-        if vacante:
-            print(f"Vacante: {vacante[0]}")
-        else:
-            print("⚠️  Vacante no encontrada. Continuando sin asociar.")
-            vid = None
+    print(f"\n🛠️  Requisitos técnicos:")
+    print(f"   Obligatorio: {vacante['stack_obligatorio']}")
+    print(f"   Deseable:    {vacante['stack_deseable'] or '-'}")
     
-    evaluador = input("\nEvaluador (tu nombre): ").strip()
+    print(f"\n💶 Condiciones:")
+    print(f"   Salario: {vacante['rango_salarial_min']}k - {vacante['rango_salarial_max']}k €")
     
-    print("\n--- Dimensión R: Entrevista/Comunicación (1-10) ---")
-    print("   1-3: respuestas vagas, sin ejemplos, confusión conceptos base")
-    print("   4-6: base correcta, algunos ejemplos, huecos puntuales")
-    print("   7-8: sólido, ejemplos claros, buena toma decisiones")
-    print("   9-10: excelente, liderazgo/ownership, profundidad, anticipa riesgos")
-    try:
-        r_puntuacion = int(input("Puntuación R (1-10)*: ").strip())
-    except ValueError:
-        r_puntuacion = 0
-    r_notas = input("Notas R: ").strip()
+    print(f"\n👥 Responsable: {vacante['responsable']}")
+    print(f"🚨 Urgencia: {vacante['urgencia'].upper()}")
+    print(f"🏷️  Estado: {vacante['estado']}")
+    print(f"📅 Apertura: {vacante['fecha_apertura']}")
     
-    print("\n--- Dimensión S: Técnica/Stack (1-10) ---")
-    print("   Evalúa stack específico: APIs estándar, Java/Spring, Kubernetes...")
-    try:
-        s_puntuacion = int(input("Puntuación S (1-10)*: ").strip())
-    except ValueError:
-        s_puntuacion = 0
-    s_notas = input("Notas S: ").strip()
+    print(f"\n📝 Notas:")
+    print(f"   {vacante['notas'] or '-'}")
     
-    print("\n--- Dimensión T: Cultural/Soft Skills (1-10) ---")
-    print("   Alineación DevSecOps, colaboración equipos multidisciplinares, estabilidad")
-    try:
-        t_puntuacion = int(input("Puntuación T (1-10)*: ").strip())
-    except ValueError:
-        t_puntuacion = 0
-    t_notas = input("Notas T: ").strip()
+    print(f"\n⭐ Candidatos finalistas:")
+    print(f"   {vacante['candidatos_finalistas'] or 'Ninguno aún'}")
     
-    # Calcular score final con ponderación por perfil
-    perfil = candidato[1] or 'backend'
-    ponderacion = {
-        'backend': (0.20, 0.60, 0.20),
-        'devops': (0.20, 0.60, 0.20),
-        'qa': (0.25, 0.50, 0.25),
-        'solution_architect': (0.25, 0.50, 0.25),
-        'product_owner': (0.30, 0.40, 0.30),
-        'integrations': (0.20, 0.60, 0.20),
-        'support': (0.30, 0.40, 0.30),
-        'frontend': (0.25, 0.50, 0.25)
-    }
-    p_r, p_s, p_t = ponderacion.get(perfil, (0.25, 0.50, 0.25))
-    score_final = round((r_puntuacion * p_r) + (s_puntuacion * p_s) + (t_puntuacion * p_t), 2)
+    print(f"\n✅ Seleccionado:")
+    print(f"   {vacante['candidato_seleccionado'] or 'Pendiente'}")
     
-    print(f"\n➤ Score final calculado: {score_final}/10")
-    
-    # Señales de buen encaje según perfil
-    senales = []
-    if perfil == 'backend':
-        senales = ["Explica decisiones técnicas con datos", "Piensa en resiliencia (timeouts/retries)", "Conoce prácticas calidad (tests/code review)"]
-    elif perfil == 'devops':
-        senales = ["Automatiza por defecto (IaC, pipelines)", "Enfoca seguridad sin bloquear entregas (DevSecOps)"]
-    elif perfil == 'qa':
-        senales = ["Pensamiento crítico y precisión", "Colabora como habilitador (no policía)"]
-    elif perfil == 'integrations':
-        senales = ["Precisión en contratos APIs y logs", "Piensa interoperabilidad desde diseño"]
-    
-    if senales:
-        print("\n✅ Señales de buen encaje (marca las que observes):")
-        senales_seleccionadas = []
-        for i, senal in enumerate(senales, 1):
-            if input(f"  [{i}] {senal} (S/n): ").strip().lower() in ('s', 'si', 'y', 'yes', ''):
-                senales_seleccionadas.append(senal)
-        senales_encaje = " | ".join(senales_seleccionadas) if senales_seleccionadas else ""
-    else:
-        senales_encaje = ""
-    
-    print("\n--- Recomendación final ---")
-    print("  1. Contratar")
-    print("  2. Reservas (seguir evaluando)")
-    print("  3. Siguiente fase")
-    print("  4. Descartar")
-    rec_map = {"1": "contratar", "2": "reservas", "3": "siguiente_fase", "4": "descartar"}
-    rec_opcion = input("Opción (1-4): ").strip()
-    recomendacion = rec_map.get(rec_opcion, "reservas")
-    
-    cursor.execute('''
-        INSERT INTO evaluaciones (
-            candidato_id, vacante_id, fecha, evaluador,
-            r_puntuacion, r_notas,
-            s_puntuacion, s_notas,
-            t_puntuacion, t_notas,
-            score_final, senales_encaje, recomendacion, tipo_entrevista
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (
-        cid,
-        vid if vid else None,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        evaluador,
-        r_puntuacion, r_notas,
-        s_puntuacion, s_notas,
-        t_puntuacion, t_notas,
-        score_final,
-        senales_encaje,
-        recomendacion,
-        'general'
-    ))
-    
-    # Actualizar estado del candidato según score
-    if score_final >= 8.5:
-        cursor.execute('UPDATE candidatos SET estado = ? WHERE id = ?', ('finalista', cid))
-    elif score_final >= 7.0:
-        cursor.execute('UPDATE candidatos SET estado = ? WHERE id = ?', ('entrevista', cid))
-    
-    conn.commit()
     conn.close()
-    
-    print(f"\n✅ Evaluación registrada correctamente")
-    print(f"   Score final: {score_final}/10")
-    print(f"   Recomendación: {recomendacion}")
-    if senales_encaje:
-        print(f"   ✅ Señales: {senales_encaje}")
     pausa()
 
 
 # ========================================
-# BANCO DE PREGUNTAS - Integrado
+# MÓDULO 3: PREGUNTAS DE ENTREVISTA
 # ========================================
 
-def menu_preguntas(db_path):
+def modulo_preguntas(db_path):
     while True:
         limpiar_pantalla()
         print("=" * 70)
-        print("   ❓ BANCO DE PREGUNTAS - TalentFlow IT")
+        print("   ❓ PREGUNTAS DE ENTREVISTA")
         print("=" * 70)
-        print("\n1. 🔍 Buscar preguntas por perfil/perfil IT")
-        print("2. 📋 Listar todas las preguntas")
-        print("3. 🎯 Generar guía de entrevista (perfil IT)")
-        print("0. ⬅️  Volver")
+        print("\n1. 🔍 Buscar preguntas")
+        print("2. 📋 Listar todas")
+        print("3. ➕ Añadir nueva pregunta")
+        print("0. ⬅️  Volver al menú principal")
         print("-" * 70)
         
         opcion = input("\n➤ Opción: ").strip()
@@ -860,9 +766,9 @@ def menu_preguntas(db_path):
         if opcion == "1":
             buscar_preguntas(db_path)
         elif opcion == "2":
-            listar_todas_preguntas(db_path)
+            listar_preguntas(db_path)
         elif opcion == "3":
-            generar_guia_entrevista(db_path)
+            anadir_pregunta(db_path)
         elif opcion == "0":
             break
         else:
@@ -873,32 +779,29 @@ def menu_preguntas(db_path):
 def buscar_preguntas(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   🔍 BUSCAR PREGUNTAS POR PERFIL IT")
+    print("   🔍 BUSCAR PREGUNTAS")
     print("=" * 70)
     
-    print("\nPerfiles IT:")
-    for key, value in PERFILES_IT.items():
-        print(f"  {key:20} - {value}")
-    
-    perfil = input("\nPerfil IT (ej: backend, devops) o 'general' para todas: ").strip().lower()
+    termino = input("\nTérmino de búsqueda (texto o tag): ").strip()
+    if not termino:
+        print("\n⚠️  Búsqueda vacía.")
+        pausa()
+        return
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
-    if perfil == 'general' or not perfil:
-        cursor.execute('SELECT * FROM preguntas_entrevista ORDER BY categoria, nivel_dificultad DESC')
-    else:
-        cursor.execute('''
-            SELECT * FROM preguntas_entrevista 
-            WHERE subcategoria = ? OR categoria = 'general' OR categoria = 'cultural' OR categoria = 'situacional'
-            ORDER BY categoria, nivel_dificultad DESC
-        ''', (perfil,))
+    cursor.execute('''
+        SELECT * FROM preguntas 
+        WHERE texto LIKE ? OR tags LIKE ?
+        ORDER BY categoria, nivel_dificultad DESC
+    ''', (f"%{termino}%", f"%{termino}%"))
     
     resultados = cursor.fetchall()
     conn.close()
     
     if not resultados:
-        print("\n📭 No se encontraron preguntas para este perfil.")
+        print(f"\n📭 No se encontraron preguntas con '{termino}'.")
         pausa()
         return
     
@@ -910,30 +813,26 @@ def buscar_preguntas(db_path):
             categoria_actual = p[1]
             print(f"\n{'='*70}")
             print(f"📌 CATEGORÍA: {categoria_actual.upper()}")
-            if p[2]:
-                print(f"   Subcategoría: {p[2]}")
             print('='*70)
         
-        nivel = p[5][:1].upper() if p[5] else '?'
-        print(f"\n[ID: {p[0]}] ({nivel})")
+        sub = f" | {p[2]}" if p[2] else ""
+        print(f"\n[ID: {p[0]}] ({p[4][:1].upper()}){sub}")
         print(f"❓ {p[3]}")
-        if p[4]:
-            print(f"💡 Ejemplo: {p[4][:70]}...")
-        if p[6]:
-            print(f"🏷️  Tags: {p[6]}")
+        if p[5]:
+            print(f"🏷️  Tags: {p[5]}")
     
     pausa()
 
 
-def listar_todas_preguntas(db_path):
+def listar_preguntas(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   📋 TODAS LAS PREGUNTAS - TalentFlow IT")
+    print("   📋 TODAS LAS PREGUNTAS")
     print("=" * 70)
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM preguntas_entrevista ORDER BY categoria, subcategoria, nivel_dificultad DESC')
+    cursor.execute('SELECT * FROM preguntas ORDER BY categoria, subcategoria, nivel_dificultad DESC')
     resultados = cursor.fetchall()
     conn.close()
     
@@ -952,95 +851,102 @@ def listar_todas_preguntas(db_path):
             print(f"📌 {categoria_actual.upper()}")
             print('='*70)
         
-        perfil = f" | {p[2]}" if p[2] else ""
-        nivel = p[5][:1].upper() if p[5] else '?'
-        print(f"\n[ID: {p[0]}] ({nivel}){perfil}")
+        sub = f" | {p[2]}" if p[2] else ""
+        print(f"\n[ID: {p[0]}] ({p[4][:1].upper()}){sub}")
         print(f"❓ {p[3]}")
+        if p[5]:
+            print(f"🏷️  Tags: {p[5]}")
     
     pausa()
 
 
-def generar_guia_entrevista(db_path):
+def anadir_pregunta(db_path):
     limpiar_pantalla()
     print("=" * 70)
-    print("   🎯 GUÍA DE ENTREVISTA POR PERFIL - TalentFlow IT")
+    print("   ➕ AÑADIR NUEVA PREGUNTA")
     print("=" * 70)
     
-    print("\nPerfiles IT:")
-    for key, value in PERFILES_IT.items():
-        print(f"  {key:20} - {value}")
+    print("\nCategorías: general | tecnica | cultural | situacional")
+    categoria = input("\nCategoría*: ").strip().lower()
+    while categoria not in ['general', 'tecnica', 'cultural', 'situacional']:
+        print("⚠️  Categoría no válida")
+        categoria = input("Categoría*: ").strip().lower()
     
-    perfil = input("\nPerfil IT para la guía*: ").strip().lower()
-    while perfil not in PERFILES_IT:
-        print("⚠️  Perfil no válido")
-        perfil = input("Perfil IT para la guía*: ").strip().lower()
+    subcategoria = None
+    if categoria == 'tecnica':
+        subcategoria = input("Subcategoría (ej: backend, devops): ").strip().lower()
+    
+    texto = input("\nPregunta*: ").strip()
+    while not texto:
+        print("⚠️  La pregunta no puede estar vacía")
+        texto = input("Pregunta*: ").strip()
+    
+    print("\nNivel dificultad: facil | medio | dificil")
+    nivel = input("Nivel dificultad [medio]: ").strip().lower() or 'medio'
+    
+    tags = input("Tags (separados por comas): ").strip()
     
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    
-    # Obtener preguntas técnicas del perfil + generales/culturales
     cursor.execute('''
-        SELECT * FROM preguntas_entrevista 
-        WHERE (subcategoria = ? AND categoria = 'tecnica') 
-           OR categoria IN ('general', 'cultural', 'situacional')
-        ORDER BY 
-            CASE categoria 
-                WHEN 'tecnica' THEN 1 
-                WHEN 'general' THEN 2 
-                WHEN 'cultural' THEN 3 
-                WHEN 'situacional' THEN 4 
-            END,
-            nivel_dificultad DESC
-        LIMIT 12
-    ''', (perfil,))
-    
-    preguntas = cursor.fetchall()
+        INSERT INTO preguntas (categoria, subcategoria, texto, nivel_dificultad, tags)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (categoria, subcategoria, texto, nivel, tags))
+    conn.commit()
     conn.close()
     
-    if not preguntas:
-        print("\n📭 No se pudieron generar preguntas para este perfil.")
-        pausa()
-        return
-    
-    print(f"\n{'='*70}")
-    print(f"📄 GUÍA DE ENTREVISTA: {PERFILES_IT[perfil]}")
-    print(f"{'='*70}")
-    
-    seccion_actual = None
-    for i, p in enumerate(preguntas, 1):
-        if p[1] != seccion_actual:
-            seccion_actual = p[1]
-            print(f"\n{'─'*70}")
-            print(f"🔹 {seccion_actual.upper()}")
-            print('─'*70)
-        
-        print(f"\n{i}. {p[3]}")
-        if p[4]:
-            print(f"   💡 {p[4][:80]}...")
-    
-    print(f"\n{'='*70}")
-    print("💡 Tips TalentFlow:")
-    print("   • Para perfiles técnicos: profundiza en resiliencia y APIs estándar")
-    print("   • Para culturales: enfatiza estabilidad y trabajo en equipo largo plazo")
-    print("   • Siempre pregunta sobre experiencia OSS/BSS y estándares APIs")
-    print(f"{'='*70}")
-    
+    print("\n✅ Pregunta añadida correctamente.")
     pausa()
 
 
 # ========================================
-# MÓDULO PRESENTACIÓN DE EMPRESA (único lugar con Alvatross)
+# MÓDULO 4: PERFILES SELECCIONADOS POR LA EMPRESA
+# ========================================
+
+def modulo_perfiles_empresa(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   👥 PERFILES SELECCIONADOS POR LA EMPRESA")
+    print("=" * 70)
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM perfiles_empresa ORDER BY seniority, nombre')
+    perfiles = cursor.fetchall()
+    conn.close()
+    
+    if not perfiles:
+        print("\n📭 No hay perfiles definidos aún.")
+        pausa()
+        return
+    
+    for p in perfiles:
+        print(f"\n{'─'*70}")
+        print(f"🔹 {p[1].upper()} ({p[5].upper()})")
+        print(f"   💰 Rango salarial: {p[6]}k - {p[7]}k €")
+        print(f"\n   {p[2]}")
+        print(f"\n   🛠️  Stack: {p[3]}")
+        print(f"   📋 Responsabilidades: {p[4]}")
+    
+    print(f"\n{'─'*70}")
+    pausa()
+
+
+# ========================================
+# MÓDULO 5: PRESENTACIÓN DE EMPRESA
 # ========================================
 
 def modulo_presentacion_empresa():
     limpiar_pantalla()
     print("=" * 70)
-    print("   🏢 PRESENTACIÓN DE EMPRESA - ALVATROSS (Grupo SATEC)")
+    print("   🏢 PRESENTACIÓN DE EMPRESA")
     print("=" * 70)
     print("""
-ALVATROSS es una empresa tecnológica especializada en soluciones de software 
-para la automatización de operaciones en telecomunicaciones, con enfoque en 
-OSS (Operational Support Systems) y plataformas digitales modernas.
+ALVATROSS (Grupo SATEC)
+
+Somos una empresa tecnológica especializada en soluciones de software para 
+la automatización de operaciones en telecomunicaciones, con enfoque en OSS 
+(Operational Support Systems) y plataformas digitales modernas.
 
 Pertenencia al Grupo SATEC:
 • Grupo tecnológico español con más de 25 años de experiencia
@@ -1074,100 +980,564 @@ Cultura:
 
 
 # ========================================
-# MENÚ PRINCIPAL - TalentFlow IT
+# MÓDULO 6: METODOLOGÍAS ÁGILES
+# ========================================
+
+def modulo_metodologias_agiles():
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   🚀 METODOLOGÍAS ÁGILES")
+    print("=" * 70)
+    print("""
+SCRUM
+• Iteraciones en sprints de 1-4 semanas
+• Roles: Product Owner, Scrum Master, Development Team
+• Eventos: Planning, Daily, Review, Retrospective
+• Artefactos: Product Backlog, Sprint Backlog, Increment
+• Clave: Transparencia, inspección y adaptación
+
+KANBAN
+• Flujo continuo visualizado en tablero
+• Límites WIP (Work In Progress)
+• Sin roles fijos ni sprints
+• Métricas: Lead Time, Cycle Time
+• Clave: Optimizar flujo y entrega continua
+
+LEAN
+• Filosofía centrada en valor y eliminación de desperdicios
+• Principios: entregar rápido, empoderar equipo, ver el sistema completo
+• Clave: Maximizar valor, minimizar waste
+
+EXTREME PROGRAMMING (XP)
+• Enfoque en calidad técnica
+• Prácticas: TDD, Pair Programming, Integración Continua, Refactoring
+• Clave: Código limpio y adaptación rápida
+
+SAFe (Scaled Agile Framework)
+• Escalado de ágil para grandes organizaciones
+• Niveles: Equipo → Programa → Solución → Portafolio
+• Clave: Coordinación entre múltiples equipos ágiles
+""")
+    print("=" * 70)
+    pausa()
+
+
+# ========================================
+# MÓDULO 7: CONVENIO OFICINAS MADRID
+# ========================================
+
+def modulo_convenio_madrid():
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   📋 CONVENIO COLECTIVO OFICINAS Y DESPACHOS DE MADRID")
+    print("=" * 70)
+    print("""
+Vigencia: 2023-2026
+
+Grupos profesionales y salarios base mensuales (2024):
+• Grupo 1 (Directivos): 2.800€ - 3.500€
+• Grupo 2 (Técnicos superiores): 2.200€ - 2.800€
+• Grupo 3 (Técnicos medios): 1.800€ - 2.200€
+• Grupo 4 (Administrativos cualificados): 1.500€ - 1.800€
+• Grupo 5 (Administrativos): 1.300€ - 1.500€
+• Grupo 6 (Auxiliares): 1.100€ - 1.300€
+
+Jornada laboral:
+• 1.792 horas anuales (40 horas semanales)
+• Horario flexible con núcleo de presencia 10:00-15:00
+• Viernes intensivo permitido por acuerdo empresa
+
+Vacaciones:
+• 22 días naturales + 6 días retribuidos recuperables
+• Plus vacaciones: 300€ brutos anuales
+
+Plus transporte: 35€/mes
+Plus alimentación: 9€/día laborable (ticket restaurante)
+
+Actualización salarial 2024: +3.5% IPC real
+
+⚠️  Nota: Consultar texto completo oficial para casos específicos.
+Documento oficial: https://www.mscbs.gob.es/
+""")
+    print("=" * 70)
+    pausa()
+
+
+# ========================================
+# MÓDULO 8: ESTATUTO DE LOS TRABAJADORES
+# ========================================
+
+def modulo_estatuto_trabajadores():
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   📜 ESTATUTO DE LOS TRABAJADORES (Real Decreto Legislativo 2/2015)")
+    print("=" * 70)
+    print("""
+Artículos más relevantes para RRHH:
+
+ARTÍCULO 40 - Movilidad funcional y geográfica
+• Cambios de puesto dentro mismo grupo profesional: sin consentimiento
+• Cambios a grupo inferior: requiere consentimiento o extinción con indemnización
+• Traslados geográficos >25km: derecho a extinción con 20 días/año (máx. 12 meses)
+
+ARTÍCULO 50 - Extinción por voluntad del trabajador
+• Preaviso: según convenio (normalmente 15 días)
+• Derecho a finiquito en 30 días
+
+ARTÍCULO 53 - Despido disciplinario
+• Causas: ineptitud, falta de adaptación, faltas de asistencia >20% en 2 meses
+• Indemnización: 0 días (si procedente)
+• Impugnación: 20 días hábiles desde notificación
+
+ARTÍCULO 54 - Despido objetivo
+• Causas: económicas, técnicas, organizativas, de producción
+• Indemnización: 20 días/año (máx. 12 meses)
+• Preaviso: 15 días
+
+ARTÍCULO 55 - Faltas y sanciones
+• Leves: apercibimiento, multa hasta 1 día
+• Graves: suspensión 2-15 días
+• Muy graves: suspensión 16-60 días o despido
+
+ARTÍCULO 35 - Horas extraordinarias
+• Máximo 80 horas/año (salvo fuerza mayor)
+• Compensación: descanso o retribución económica
+
+⚠️  Nota: Siempre consultar con asesoría jurídica para casos concretos.
+Texto completo: https://www.boe.es/buscar/act.php?id=BOE-A-2015-11453
+""")
+    print("=" * 70)
+    pausa()
+
+
+# ========================================
+# MÓDULO 9: ASOCIACIONES COLABORACIÓN
+# ========================================
+
+def modulo_asociaciones(db_path):
+    while True:
+        limpiar_pantalla()
+        print("=" * 70)
+        print("   ♿ ASOCIACIONES CON LAS QUE COLABORAR")
+        print("=" * 70)
+        print("\n1. 👁️  Ver asociaciones por tipo")
+        print("2. ➕ Añadir nueva asociación")
+        print("0. ⬅️  Volver al menú principal")
+        print("-" * 70)
+        
+        opcion = input("\n➤ Opción: ").strip()
+        
+        if opcion == "1":
+            ver_asociaciones(db_path)
+        elif opcion == "2":
+            anadir_asociacion(db_path)
+        elif opcion == "0":
+            break
+        else:
+            print("\n⚠️  Opción no válida.")
+            pausa()
+
+
+def ver_asociaciones(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   ♿ ASOCIACIONES POR TIPO")
+    print("=" * 70)
+    
+    print("\nTipos disponibles: discapacidad | mujeres | otras")
+    tipo = input("\nFiltrar por tipo (deja en blanco para todas): ").strip().lower() or None
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    if tipo:
+        cursor.execute('SELECT * FROM asociaciones WHERE tipo = ? ORDER BY nombre', (tipo,))
+    else:
+        cursor.execute('SELECT * FROM asociaciones ORDER BY tipo, nombre')
+    
+    resultados = cursor.fetchall()
+    conn.close()
+    
+    if not resultados:
+        print("\n📭 No hay asociaciones con esos criterios.")
+        pausa()
+        return
+    
+    tipo_actual = None
+    for a in resultados:
+        if a[2] != tipo_actual:
+            tipo_actual = a[2]
+            print(f"\n{'='*70}")
+            print(f"📌 TIPO: {tipo_actual.upper()}")
+            print('='*70)
+        
+        print(f"\n🔹 {a[1]}")
+        print(f"   📧 Contacto: {a[3]}")
+        print(f"   🌐 Web: {a[4]}")
+        print(f"   ℹ️  {a[5]}")
+    
+    pausa()
+
+
+def anadir_asociacion(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   ➕ AÑADIR NUEVA ASOCIACIÓN")
+    print("=" * 70)
+    
+    nombre = input("\nNombre*: ").strip()
+    while not nombre:
+        print("⚠️  El nombre es obligatorio")
+        nombre = input("Nombre*: ").strip()
+    
+    print("\nTipos: discapacidad | mujeres | otras")
+    tipo = input("Tipo*: ").strip().lower()
+    while tipo not in ['discapacidad', 'mujeres', 'otras']:
+        print("⚠️  Tipo no válido")
+        tipo = input("Tipo*: ").strip().lower()
+    
+    contacto = input("Contacto: ").strip()
+    web = input("Web: ").strip()
+    notas = input("Notas: ").strip()
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO asociaciones (nombre, tipo, contacto, web, notas)
+        VALUES (?, ?, ?, ?, ?)
+    ''', (nombre, tipo, contacto, web, notas))
+    conn.commit()
+    conn.close()
+    
+    print("\n✅ Asociación añadida correctamente.")
+    pausa()
+
+
+# ========================================
+# MÓDULO 10: CENTROS DE PRÁCTICAS
+# ========================================
+
+def modulo_centros_practicas(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   🎓 CENTROS DE PRÁCTICAS")
+    print("=" * 70)
+    print("""
+Centros colaboradores para prácticas formativas:
+
+UNIVERSIDADES
+• Universidad Politécnica de Madrid (UPM)
+  - Grados: Ingeniería Informática, Telecomunicaciones
+  - Contacto: practicas@upm.es
+  
+• Universidad Carlos III de Madrid (UC3M)
+  - Grados: Ingeniería de Software, Sistemas de Telecomunicación
+  - Contacto: empresas.leganes@uc3m.es
+  
+• Universidad de Oviedo
+  - Campus: Gijón (proximidad a oficinas Avilés)
+  - Grados: Ingeniería Informática, Telecomunicaciones
+  - Contacto: practicas@uniovi.es
+
+FP SUPERIOR
+• IES Virgen de la Paloma (Madrid)
+  - Ciclos: DAM, DAW, Administración de Sistemas
+  - Contacto: secretaria@iesvirgendelapaloma.es
+  
+• IES La Magdalena (Avilés)
+  - Ciclos: DAM, Redes y Sistemas
+  - Contacto: ieslamagdalena@eduastur.es
+
+PROCEDIMIENTO PRÁCTICAS
+1. Contactar con departamento de prácticas del centro
+2. Firmar convenio específico (modelo empresa)
+3. Asignar tutor interno empresa
+4. Definir plan de actividades y objetivos
+5. Seguimiento quincenal y evaluación final
+
+⚠️  Requisitos legales:
+• Seguro escolar obligatorio
+• Duración máxima: 9 meses (FP) / 6 meses (universidad)
+• Horario: máximo 6 horas/día, 30 horas/semana
+• No sustitución de personal contratado
+""")
+    print("=" * 70)
+    pausa()
+
+
+# ========================================
+# MÓDULO 11: PORTALES DE EMPLEO
+# ========================================
+
+def modulo_portales_empleo(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   💼 PORTALES DE EMPLEO")
+    print("=" * 70)
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM portales_empleo ORDER BY tipo, nombre')
+    portales = cursor.fetchall()
+    conn.close()
+    
+    if not portales:
+        print("\n📭 No hay portales registrados aún.")
+        pausa()
+        return
+    
+    tipo_actual = None
+    for p in portales:
+        if p[3] != tipo_actual:
+            tipo_actual = p[3]
+            print(f"\n{'='*70}")
+            print(f"📌 TIPO: {tipo_actual.upper()}")
+            print('='*70)
+        
+        print(f"\n🔹 {p[1]}")
+        print(f"   🌐 {p[2]}")
+        print(f"   💰 Coste: {p[4]}")
+        print(f"   ℹ️  {p[5]}")
+    
+    pausa()
+
+
+# ========================================
+# MÓDULO 12: PLANTILLAS VACANTES
+# ========================================
+
+def modulo_plantillas_vacantes(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   📄 PLANTILLAS DE VACANTES PARA PUBLICAR")
+    print("=" * 70)
+    print("""
+Plantillas predefinidas para publicación rápida:
+
+BACKEND DEVELOPER (Java/Spring)
+───────────────────────────────────────────────────────────────────────
+¿Quieres desarrollar software crítico para operadores de telecom?
+Buscamos Backend Developer para unirse a nuestro equipo de producto OSS.
+
+Stack: Java 17, Spring Boot 3, PostgreSQL, Kubernetes, AWS/Azure
+Metodología: Scrum + DevOps (GitLab CI/CD)
+Modalidad: 100% remoto o híbrido (Madrid/Avilés)
+
+Requisitos:
+• 3+ años experiencia Java/Spring en entornos cloud
+• Experiencia con microservicios y APIs REST
+• Conocimientos de SQL y bases de datos relacionales
+• Inglés técnico (B2 mínimo)
+
+Ofrecemos:
+• Salario: 38.000€ - 52.000€ (según experiencia)
+• Proyectos estables de largo plazo con clientes internacionales
+• Formación continua en estándares TM Forum y ODA
+• Equipo técnico senior y ambiente colaborativo
+
+───────────────────────────────────────────────────────────────────────
+
+DEVOPS ENGINEER
+───────────────────────────────────────────────────────────────────────
+¿Automatizas por naturaleza? Únete a nuestro equipo de plataforma OSS.
+
+Stack: Docker, Kubernetes, AWS/Azure, Terraform, GitLab CI/CD, Prometheus
+Modalidad: 100% remoto
+
+Requisitos:
+• 2+ años experiencia en DevOps/cloud
+• Dominio de Kubernetes y pipelines CI/CD
+• Automatización con Terraform/Ansible
+• Mentalidad DevSecOps
+
+Ofrecemos:
+• Salario: 42.000€ - 58.000€
+• Infraestructura cloud gestionada con IaC
+• Proyectos OSS/BSS para operadores globales
+• Formación certificaciones cloud (AWS/Azure)
+
+───────────────────────────────────────────────────────────────────────
+
+💡 Consejo: Personaliza estas plantillas con stack específico de cada vacante
+antes de publicar en portales de empleo.
+""")
+    print("=" * 70)
+    pausa()
+
+
+# ========================================
+# MÓDULO 13: TEAM BUILDING
+# ========================================
+
+def modulo_team_building(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   🤝 TEAM BUILDING POR CATEGORÍAS")
+    print("=" * 70)
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute('SELECT DISTINCT categoria FROM team_building ORDER BY categoria')
+    categorias = cursor.fetchall()
+    
+    print("\nCategorías disponibles:")
+    for i, cat in enumerate(categorias, 1):
+        cursor.execute('SELECT COUNT(*) FROM team_building WHERE categoria = ?', (cat[0],))
+        count = cursor.fetchone()[0]
+        print(f"  {i}. {cat[0].capitalize()} ({count} actividades)")
+    
+    print("\n0. Ver todas las actividades")
+    opcion = input("\n➤ Selecciona categoría (número) o 0 para todas: ").strip()
+    
+    if opcion == "0":
+        cursor.execute('SELECT * FROM team_building ORDER BY categoria, nombre_actividad')
+        actividades = cursor.fetchall()
+    else:
+        try:
+            idx = int(opcion) - 1
+            categoria_sel = categorias[idx][0]
+            cursor.execute('SELECT * FROM team_building WHERE categoria = ? ORDER BY nombre_actividad', (categoria_sel,))
+            actividades = cursor.fetchall()
+        except (ValueError, IndexError):
+            print("\n⚠️  Opción no válida.")
+            conn.close()
+            pausa()
+            return
+    
+    conn.close()
+    
+    if not actividades:
+        print("\n📭 No hay actividades en esta categoría.")
+        pausa()
+        return
+    
+    categoria_actual = None
+    for a in actividades:
+        if a[1] != categoria_actual:
+            categoria_actual = a[1]
+            print(f"\n{'='*70}")
+            print(f"📌 CATEGORÍA: {categoria_actual.upper()}")
+            print('='*70)
+        
+        print(f"\n🔹 {a[2]}")
+        print(f"   Empresa: {a[3]}")
+        print(f"   💶 Precio: {a[4]} | ⏱️  Duración: {a[5]}")
+        print(f"   👥 Participantes: {a[6]}-{a[7]} personas")
+        print(f"   ℹ️  {a[8]}")
+    
+    pausa()
+
+
+# ========================================
+# MÓDULO 14: GLOSARIO
+# ========================================
+
+def modulo_glosario(db_path):
+    limpiar_pantalla()
+    print("=" * 70)
+    print("   📖 GLOSARIO DE TÉRMINOS")
+    print("=" * 70)
+    
+    print("\nCategorías disponibles: técnico | metodologia | legal | telecom | rrhh | todas")
+    categoria = input("\nFiltrar por categoría (deja en blanco para todas): ").strip().lower() or None
+    
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    if categoria and categoria != 'todas':
+        cursor.execute('SELECT * FROM glosario WHERE categoria = ? ORDER BY termino', (categoria,))
+    else:
+        cursor.execute('SELECT * FROM glosario ORDER BY categoria, termino')
+    
+    resultados = cursor.fetchall()
+    conn.close()
+    
+    if not resultados:
+        print("\n📭 No hay términos con esos criterios.")
+        pausa()
+        return
+    
+    categoria_actual = None
+    for g in resultados:
+        if g[3] != categoria_actual:
+            categoria_actual = g[3]
+            print(f"\n{'='*70}")
+            print(f"📌 CATEGORÍA: {categoria_actual.upper()}")
+            print('='*70)
+        
+        print(f"\n🔹 {g[1]}")
+        print(f"   {g[2]}")
+    
+    pausa()
+
+
+# ========================================
+# MENÚ PRINCIPAL
 # ========================================
 
 def menu_principal(db_path):
     while True:
         limpiar_pantalla()
         print("=" * 70)
-        print("   📋 TALENTFLOW IT - Plataforma de Selección IT/Telecom")
-        print("   Stack: APIs Estándar | OSS/BSS | Java/Spring | Kubernetes")
+        print("   📋 APLICACIÓN INTEGRAL DE SELECCIÓN Y RECLUTAMIENTO")
         print("=" * 70)
-        print("\n1. 👥 Gestión de Candidatos")
-        print("2. 💼 Gestión de Vacantes")
-        print("3. 📊 Evaluaciones R/S/T")
-        print("4. ❓ Banco de Preguntas Entrevista")
-        print("5. 🏢 Presentación de Empresa")
+        print("\n1. 👥 Base de datos de candidatos")
+        print("2. 💼 Selección de la empresa (vacantes)")
+        print("3. ❓ Preguntas de entrevista")
+        print("4. 👤 Perfiles seleccionados por la empresa")
+        print("5. 🏢 Presentación de empresa")
+        print("6. 🚀 Metodologías ágiles")
+        print("7. 📋 Convenio oficinas Madrid")
+        print("8. 📜 Estatuto de los trabajadores")
+        print("9. ♿ Asociaciones colaboración")
+        print("10. 🎓 Centros de prácticas")
+        print("11. 💼 Portales de empleo")
+        print("12. 📄 Plantillas vacantes")
+        print("13. 🤝 Team building")
+        print("14. 📖 Glosario de términos")
         print("0. ❌ Salir")
         print("-" * 70)
         
-        opcion = input("\n➤ Elige una opción (0-5): ").strip()
+        opcion = input("\n➤ Elige una opción (0-14): ").strip()
         
         if opcion == "1":
-            while True:
-                limpiar_pantalla()
-                print("=" * 70)
-                print("   👥 GESTIÓN DE CANDIDATOS")
-                print("=" * 70)
-                print("\n1. 🆕 Registrar nuevo candidato")
-                print("2. 🔍 Listar candidatos")
-                print("3. 👁️  Ver detalle de candidato")
-                print("0. ⬅️  Volver")
-                print("-" * 70)
-                
-                subopcion = input("\n➤ Opción: ").strip()
-                if subopcion == "1":
-                    crear_candidato(db_path)
-                elif subopcion == "2":
-                    listar_candidatos(db_path)
-                elif subopcion == "3":
-                    ver_detalle_candidato(db_path)
-                elif subopcion == "0":
-                    break
-        
+            modulo_candidatos(db_path)
         elif opcion == "2":
-            while True:
-                limpiar_pantalla()
-                print("=" * 70)
-                print("   💼 GESTIÓN DE VACANTES")
-                print("=" * 70)
-                print("\n1. ➕ Crear nueva vacante")
-                print("2. 📋 Listar vacantes")
-                print("0. ⬅️  Volver")
-                print("-" * 70)
-                
-                subopcion = input("\n➤ Opción: ").strip()
-                if subopcion == "1":
-                    crear_vacante(db_path)
-                elif subopcion == "2":
-                    listar_vacantes(db_path)
-                elif subopcion == "0":
-                    break
-        
+            modulo_vacantes(db_path)
         elif opcion == "3":
-            while True:
-                limpiar_pantalla()
-                print("=" * 70)
-                print("   📊 EVALUACIONES R/S/T - Sistema TalentFlow")
-                print("=" * 70)
-                print("\n1. ➕ Nueva evaluación")
-                print("0. ⬅️  Volver")
-                print("-" * 70)
-                
-                subopcion = input("\n➤ Opción: ").strip()
-                if subopcion == "1":
-                    crear_evaluacion(db_path)
-                elif subopcion == "0":
-                    break
-        
+            modulo_preguntas(db_path)
         elif opcion == "4":
-            menu_preguntas(db_path)
-        
+            modulo_perfiles_empresa(db_path)
         elif opcion == "5":
             modulo_presentacion_empresa()
-        
+        elif opcion == "6":
+            modulo_metodologias_agiles()
+        elif opcion == "7":
+            modulo_convenio_madrid()
+        elif opcion == "8":
+            modulo_estatuto_trabajadores()
+        elif opcion == "9":
+            modulo_asociaciones(db_path)
+        elif opcion == "10":
+            modulo_centros_practicas(db_path)
+        elif opcion == "11":
+            modulo_portales_empleo(db_path)
+        elif opcion == "12":
+            modulo_plantillas_vacantes(db_path)
+        elif opcion == "13":
+            modulo_team_building(db_path)
+        elif opcion == "14":
+            modulo_glosario(db_path)
         elif opcion == "0":
-            print("\n👋 ¡Hasta pronto! Que el stack te acompañe.")
+            print("\n👋 ¡Hasta pronto!")
             break
-        
         else:
             print("\n⚠️  Opción no válida.")
             pausa()
 
 
 # ========================================
-# PUNTO DE ENTRADA - EJECUCIÓN
+# PUNTO DE ENTRADA
 # ========================================
 
 if __name__ == "__main__":
@@ -1179,15 +1549,6 @@ if __name__ == "__main__":
     # Inicializar base de datos
     db_path = inicializar_db()
     print("✅ Base de datos inicializada correctamente")
-    print(f"   Ubicación: {db_path}")
-    
-    # Mostrar info TalentFlow IT
-    print("\n💡 Stack especializado integrado:")
-    print("   • APIs estándar (REST, SOAP, GraphQL)")
-    print("   • Plataformas OSS/BSS cloud-native")
-    print("   • Java/Spring Boot, Kubernetes, AWS/Azure")
-    print("   • Microservicios y arquitectura modular")
-    
     pausa()
     
     # Ejecutar menú principal
