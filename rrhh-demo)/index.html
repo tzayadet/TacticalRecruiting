@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📋 App RRHH Integral | Demo Alvatross</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-hover: #334155;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --radius: 8px;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.3), 0 2px 4px -1px rgba(0,0,0,0.2);
+      --font: system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; }
+    
+    /* Layout */
+    .app-container { display: flex; min-height: 100vh; }
+    .sidebar { width: 260px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 1rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .sidebar h2 { font-size: 1.1rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); color: var(--primary); }
+    .nav-item { padding: 0.6rem 0.8rem; margin: 0.2rem 0; border-radius: var(--radius); cursor: pointer; transition: all 0.2s; font-size: 0.85rem; display: flex; align-items: center; gap: 0.5rem; }
+    .nav-item:hover, .nav-item.active { background: var(--surface-hover); color: var(--primary); }
+    .nav-item.active { font-weight: 500; border-left: 3px solid var(--primary); }
+    
+    .main { flex: 1; padding: 1.5rem; overflow-y: auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 1.5rem; }
+    header .breadcrumb { color: var(--text-muted); font-size: 0.85rem; }
+    header .actions { display: flex; gap: 0.5rem; }
+    
+    /* Components */
+    .card { background: var(--surface); border-radius: var(--radius); padding: 1.2rem; margin-bottom: 1rem; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .grid { display: grid; gap: 1rem; }
+    .grid-2 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+    
+    .btn { padding: 0.5rem 1rem; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 500; transition: 0.2s; font-size: 0.85rem; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-warning { background: var(--warning); color: black; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: var(--surface-hover); }
+    .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; }
+    
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; margin-bottom: 0.4rem; font-size: 0.8rem; color: var(--text-muted); }
+    input, select, textarea { width: 100%; padding: 0.6rem; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: var(--font); }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); }
+    
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th, td { padding: 0.8rem 0.6rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { color: var(--text-muted); font-weight: 500; background: var(--surface); position: sticky; top: 0; }
+    tr:hover td { background: var(--surface-hover); }
+    .tag { padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.7rem; background: var(--surface-hover); border: 1px solid var(--border); }
+    .tag-blue { background: rgba(59,130,246,0.2); color: #60a5fa; }
+    .tag-green { background: rgba(16,185,129,0.2); color: #34d399; }
+    .tag-yellow { background: rgba(245,158,11,0.2); color: #fbbf24; }
+    .tag-red { background: rgba(239,68,68,0.2); color: #f87171; }
+    
+    .empty-state { text-align: center; padding: 2rem; color: var(--text-muted); }
+    .score-box { background: linear-gradient(135deg, #1e293b, #0f172a); padding: 1rem; border-radius: var(--radius); border: 1px solid var(--border); text-align: center; }
+    .score-val { font-size: 2rem; font-weight: bold; color: var(--primary); }
+    .score-label { font-size: 0.8rem; color: var(--text-muted); }
+    
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal.active { display: flex; }
+    .modal-content { background: var(--surface); padding: 1.5rem; border-radius: var(--radius); width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .close-btn { cursor: pointer; font-size: 1.2rem; }
+    
+    .hidden { display: none !important; }
+    @media (max-width: 768px) { .app-container { flex-direction: column; } .sidebar { width: 100%; height: auto; position: relative; overflow-x: auto; flex-direction: row; padding: 0.5rem; } .nav-item { white-space: nowrap; margin: 0 0.5rem; } }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <aside class="sidebar">
+      <h2>📋 RRHH Integral</h2>
+      <nav id="nav-menu"></nav>
+    </aside>
+    <main class="main">
+      <header>
+        <div>
+          <h1 id="page-title">Dashboard</h1>
+          <span id="breadcrumb">Inicio</span>
+        </div>
+        <div class="actions">
+          <button class="btn btn-outline btn-sm" onclick="App.resetDemo()">🔄 Reset Demo</button>
+        </div>
+      </header>
+      <div id="app-view"></div>
+    </main>
+  </div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-title">Modal</h3>
+        <span class="close-btn" onclick="App.closeModal()">×</span>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 1. DATA & STATE (Simulated DB)
+    // ==========================================
+    const SEED_DATA = {
+      candidates: [
+        { id: "20260101120000", nombre: "Carlos Méndez", email: "carlos.m@techmail.com", perfil_it: "backend", seniority: "senior", estado: "activo", experiencia_total: 6, stack_lenguajes: "Java, Python", cv_filename: "cv_carlos.pdf" },
+        { id: "20260102143000", nombre: "Laura Gómez", email: "laura.g@devops.es", perfil_it: "devops", seniority: "mid", estado: "entrevista", experiencia_total: 4, stack_lenguajes: "Docker, K8s, Terraform", cv_filename: null },
+        { id: "20260103091500", nombre: "Miguel Ángel Ruiz", email: "miguel.a@qa.net", perfil_it: "qa", seniority: "junior", estado: "activo", experiencia_total: 2, stack_lenguajes: "Selenium, Cypress, Postman", cv_filename: "cv_miguel.pdf" }
+      ],
+      vacancies: [
+        { id: "VAC-2026-001", titulo: "Backend Developer", departamento: "Desarrollo", ubicacion: "Remoto", modalidad: "Remoto_Total", urgencia: "alta", estado: "abierta", stack_obligatorio: "Java/Spring Boot, TM Forum APIs" },
+        { id: "VAC-2026-002", titulo: "DevOps Engineer", departamento: "Infraestructura", ubicacion: "Madrid", modalidad: "Híbrido", urgencia: "media", estado: "abierta", stack_obligatorio: "Kubernetes, CI/CD, AWS" }
+      ],
+      questions: [
+        { id: 1, categoria: "tecnica", subcategoria: "backend", texto: "¿Cómo gestionarías resiliencia en microservicios?", nivel: "dificil", tags: "resiliencia,spring" },
+        { id: 2, categoria: "cultural", subcategoria: null, texto: "Describe experiencia en equipos multidisciplinares", nivel: "medio", tags: "colaboración" },
+        { id: 3, categoria: "situacional", subcategoria: null, texto: "Bug crítico en producción. ¿Protocolo?", nivel: "dificil", tags: "crisis,producción" }
+      ],
+      profiles: [
+        { nombre: "Backend Developer", stack: "Java 17, Spring Boot 3, PostgreSQL, K8s", salario: "35-50k" },
+        { nombre: "DevOps Engineer", stack: "Docker, K8s, AWS/Azure, Terraform, GitLab CI", salario: "40-55k" }
+      ],
+      tasks: [
+        { id: 1, titulo: "Revisar CVs Backend", tipo: "tarea", prioridad: "alta", fecha_limite: "2026-05-05", estado: "pendiente" },
+        { id: 2, titulo: "Configurar pipeline GitLab", tipo: "objetivo", prioridad: "media", fecha_limite: "2026-05-15", estado: "pendiente" }
+      ],
+      calendar: [],
+      notes: []
+    };
+
+    const DB = {
+      candidates: [],
+      vacancies: [],
+      questions: [],
+      profiles: [],
+      tasks: [],
+      calendar: [],
+      notes: [],
+      evaluations: [],
+      init() {
+        const stored = localStorage.getItem("rrhh_demo_db");
+        if (stored) {
+          Object.assign(this, JSON.parse(stored));
+        } else {
+          Object.assign(this, JSON.parse(JSON.stringify(SEED_DATA)));
+          this.save();
+        }
+      },
+      save() { localStorage.setItem("rrhh_demo_db", JSON.stringify(this)); }
+    };
+
+    // ==========================================
+    // 2. CORE LOGIC
+    // ==========================================
+    const Logic = {
+      calculateRST(r, s, t, profile = "backend") {
+        const weights = {
+          backend: [0.20, 0.60, 0.20], devops: [0.20, 0.60, 0.20], qa: [0.25, 0.50, 0.25],
+          solution_architect: [0.25, 0.50, 0.25], product_owner: [0.30, 0.40, 0.30],
+          integrations: [0.20, 0.60, 0.20], support: [0.30, 0.40, 0.30]
+        };
+        const w = weights[profile] || [0.25, 0.50, 0.25];
+        return ((r * w[0]) + (s * w[1]) + (t * w[2])).toFixed(2);
+      },
+      getStatusColor(status) {
+        const map = { activo: "tag-green", entrevista: "tag-yellow", finalista: "tag-blue", descartado: "tag-red" };
+        return map[status] || "tag-blue";
+      },
+      getUrgencyColor(urg) {
+        return { alta: "tag-red", media: "tag-yellow", baja: "tag-blue" }[urg] || "tag-blue";
+      }
+    };
+
+    // ==========================================
+    // 3. UI RENDERERS
+    // ==========================================
+    const UI = {
+      dashboard() {
+        return `
+          <div class="grid grid-3">
+            <div class="score-box"><div class="score-val">${DB.candidates.length}</div><div class="score-label">Candidatos Activos</div></div>
+            <div class="score-box"><div class="score-val">${DB.vacancies.filter(v=>v.estado==='abierta').length}</div><div class="score-label">Vacantes Abiertas</div></div>
+            <div class="score-box"><div class="score-val">${DB.tasks.filter(t=>t.estado==='pendiente').length}</div><div class="score-label">Tareas Pendientes</div></div>
+          </div>
+          <div class="grid grid-2" style="margin-top:1.5rem;">
+            <div class="card">
+              <h3>📊 Últimas Evaluaciones R/S/T</h3>
+              ${DB.evaluations.length ? DB.evaluations.slice(0,3).map(e => `<div style="padding:0.5rem 0; border-bottom:1px solid var(--border)">
+                <strong>${e.nombre}</strong> | Score: <span style="color:var(--primary)">${e.score}/10</span> | Rec: <span class="tag ${e.rec==='contratar'?'tag-green':'tag-yellow'}">${e.rec}</span>
+              </div>`).join('') : '<p class="empty-state">Sin evaluaciones recientes</p>'}
+            </div>
+            <div class="card">
+              <h3>📅 Próximas Citas</h3>
+              <p class="empty-state">No hay citas programadas. Usa el módulo Calendario.</p>
+            </div>
+          </div>
+        `;
+      },
+      candidates() {
+        return `
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+              <input type="text" id="c-search" placeholder="Buscar por nombre o stack..." oninput="App.render('candidates')" style="max-width:300px;">
+              <button class="btn btn-primary" onclick="App.modal('candidate_form')">➕ Nuevo Candidato</button>
+            </div>
+            <table>
+              <thead><tr><th>ID</th><th>Nombre</th><th>Perfil</th><th>Seniority</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="c-table">
+                ${DB.candidates.map(c => `<tr>
+                  <td><small>${c.id}</small></td>
+                  <td>${c.nombre} <br><small style="color:var(--text-muted)">${c.email||'-'}</small></td>
+                  <td><span class="tag tag-blue">${c.perfil_it}</span></td>
+                  <td>${c.seniority}</td>
+                  <td><span class="tag ${Logic.getStatusColor(c.estado)}">${c.estado}</span></td>
+                  <td><button class="btn btn-outline btn-sm" onclick="App.viewCandidate('${c.id}')">👁️</button></td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      },
+      vacancies() {
+        return `
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+              <select id="v-filter" onchange="App.render('vacancies')" style="max-width:200px;">
+                <option value="">Todas</option>
+                <option value="abierta">Abiertas</option>
+                <option value="cerrada">Cerradas</option>
+              </select>
+              <button class="btn btn-primary" onclick="App.modal('vacancy_form')">➕ Nueva Vacante</button>
+            </div>
+            <table>
+              <thead><tr><th>ID</th><th>Título</th><th>Departamento</th><th>Urgencia</th><th>Estado</th><th>Stack</th></tr></thead>
+              <tbody id="v-table">
+                ${DB.vacancies.filter(v => !document.getElementById('v-filter')?.value || v.estado === document.getElementById('v-filter')?.value)
+                  .map(v => `<tr>
+                  <td>${v.id}</td>
+                  <td>${v.titulo}</td>
+                  <td>${v.departamento}</td>
+                  <td><span class="tag ${Logic.getUrgencyColor(v.urgencia)}">${v.urgencia}</span></td>
+                  <td>${v.estado}</td>
+                  <td><small>${v.stack_obligatorio}</small></td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      },
+      evaluations() {
+        return `
+          <div class="grid grid-2">
+            <div class="card">
+              <h3>➕ Nueva Evaluación R/S/T</h3>
+              <form onsubmit="App.saveEvaluation(event)">
+                <div class="form-group"><label>Candidato</label><select id="e-candidate" required>${DB.candidates.map(c=>`<option value="${c.id}">${c.nombre} (${c.perfil_it})</option>`).join('')}</select></div>
+                <div class="form-group"><label>Vacante (Opcional)</label><select id="e-vacancy"><option value="">Ninguna</option>${DB.vacancies.filter(v=>v.estado==='abierta').map(v=>`<option value="${v.id}">${v.titulo}</option>`).join('')}</select></div>
+                <div class="grid grid-3">
+                  <div class="form-group"><label>R: Comunicación (1-10)</label><input type="number" id="e-r" min="1" max="10" value="5" required></div>
+                  <div class="form-group"><label>S: Técnica (1-10)</label><input type="number" id="e-s" min="1" max="10" value="5" required></div>
+                  <div class="form-group"><label>T: Cultural (1-10)</label><input type="number" id="e-t" min="1" max="10" value="5" required></div>
+                </div>
+                <button type="submit" class="btn btn-success" style="width:100%">Calcular y Guardar</button>
+              </form>
+            </div>
+            <div class="card">
+              <h3>📊 Historial</h3>
+              <table>
+                <thead><tr><th>Fecha</th><th>Candidato</th><th>R/S/T</th><th>Score</th><th>Rec.</th></tr></thead>
+                <tbody>${DB.evaluations.map(e=>`<tr><td>${e.fecha}</td><td>${e.nombre}</td><td>${e.r}/${e.s}/${e.t}</td><td><strong>${e.score}</strong></td><td><span class="tag ${e.rec==='contratar'?'tag-green':'tag-yellow'}">${e.rec}</span></td></tr>`).join('')}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      },
+      questions() {
+        const cat = document.getElementById('q-cat')?.value || 'all';
+        const filtered = cat === 'all' ? DB.questions : DB.questions.filter(q => q.categoria === cat);
+        return `
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+              <select id="q-cat" onchange="App.render('questions')">
+                <option value="all">Todas</option>
+                <option value="tecnica">Técnicas</option>
+                <option value="cultural">Culturales</option>
+                <option value="situacional">Situacionales</option>
+              </select>
+            </div>
+            <div class="grid">${filtered.map(q=>`
+              <div class="card" style="border-left:3px solid var(--primary)">
+                <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                  <strong>${q.texto}</strong>
+                  <span class="tag ${q.nivel==='dificil'?'tag-red':q.nivel==='medio'?'tag-yellow':'tag-green'}">${q.nivel}</span>
+                </div>
+                <small style="color:var(--text-muted)">Categoría: ${q.categoria} | Tags: ${q.tags}</small>
+              </div>
+            `).join('')}</div>
+          </div>
+        `;
+      },
+      tasks() {
+        return `
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+              <input type="text" id="t-title" placeholder="Nueva tarea...">
+              <button class="btn btn-primary" onclick="App.addTask()">➕ Añadir</button>
+            </div>
+            <ul style="list-style:none; padding:0;">
+              ${DB.tasks.filter(t=>t.estado==='pendiente').map(t=>`
+                <li style="padding:0.8rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                  <span>${t.titulo} <small style="color:var(--text-muted)">(${t.prioridad})</small></span>
+                  <button class="btn btn-success btn-sm" onclick="App.completeTask(${t.id})">✅ Hecho</button>
+                </li>
+              `).join('')}
+            </ul>
+          </div>
+        `;
+      },
+      // Generic render for static modules
+      staticModule(title, content) {
+        return `<div class="card"><h3>${title}</h3><div style="margin-top:1rem; white-space:pre-line;">${content}</div></div>`;
+      }
+    };
+
+    // ==========================================
+    // 4. APP CONTROLLER
+    // ==========================================
+    const App = {
+      currentView: 'dashboard',
+      modules: [
+        { id: 'dashboard', label: '📊 Dashboard' },
+        { id: 'candidates', label: '👥 Candidatos' },
+        { id: 'vacancies', label: '💼 Vacantes' },
+        { id: 'evaluations', label: '📊 Evaluaciones R/S/T' },
+        { id: 'questions', label: '❓ Preguntas' },
+        { id: 'profiles', label: '👤 Perfiles Empresa' },
+        { id: 'presentation', label: '🏢 Presentación' },
+        { id: 'agile', label: '🚀 Metodologías' },
+        { id: 'convenio', label: '📋 Convenio Madrid' },
+        { id: 'estatuto', label: '📜 Estatuto' },
+        { id: 'asociaciones', label: '♿ Asociaciones' },
+        { id: 'centros', label: '🎓 Centros' },
+        { id: 'practicas', label: '👨‍🎓 Prácticas' },
+        { id: 'portales', label: '💼 Portales' },
+        { id: 'plantillas', label: '📄 Plantillas' },
+        { id: 'teambuilding', label: '🤝 Team Building' },
+        { id: 'normativa', label: '📜 Normativa' },
+        { id: 'tasks', label: '✅ Tareas' },
+        { id: 'calendar', label: '📅 Calendario' },
+        { id: 'onboarding', label: '🚀 Onboarding' },
+        { id: 'notes', label: '📝 Anotaciones' },
+        { id: 'glosario', label: '📖 Glosario' }
+      ],
+      init() {
+        DB.init();
+        this.renderNav();
+        this.navigate('dashboard');
+      },
+      renderNav() {
+        const nav = document.getElementById('nav-menu');
+        nav.innerHTML = this.modules.map(m => `<div class="nav-item ${this.currentView===m.id?'active':''}" onclick="App.navigate('${m.id}')">${m.label}</div>`).join('');
+      },
+      navigate(view) {
+        this.currentView = view;
+        this.renderNav();
+        document.getElementById('page-title').textContent = this.modules.find(m=>m.id===view)?.label || 'App';
+        document.getElementById('breadcrumb').textContent = `Inicio > ${view}`;
+        this.render(view);
+      },
+      render(view) {
+        const container = document.getElementById('app-view');
+        switch(view) {
+          case 'dashboard': container.innerHTML = UI.dashboard(); break;
+          case 'candidates': container.innerHTML = UI.candidates(); break;
+          case 'vacancies': container.innerHTML = UI.vacancies(); break;
+          case 'evaluations': container.innerHTML = UI.evaluations(); break;
+          case 'questions': container.innerHTML = UI.questions(); break;
+          case 'tasks': container.innerHTML = UI.tasks(); break;
+          case 'profiles': container.innerHTML = UI.staticModule('Perfiles Empresa', JSON.stringify(DB.profiles, null, 2).replace(/["{}]/g,'')); break;
+          case 'presentation': container.innerHTML = UI.staticModule('Presentación Alvatross', 'ALVATROSS (Grupo SATEC)\nEspecializada en OSS/BSS y TM Forum Open APIs.\nCloud-native, microservicios, arquitectura ODA.\nMadrid / Avilés | Great Place to Work'); break;
+          default: container.innerHTML = `<div class="card"><p>🚧 Módulo "${view}" cargado. Demo funcional lista para expansión.</p></div>`;
+        }
+      },
+      // Actions
+      modal(type) {
+        const m = document.getElementById('modal');
+        const b = document.getElementById('modal-body');
+        const t = document.getElementById('modal-title');
+        m.classList.add('active');
+        if(type==='candidate_form') {
+          t.textContent = 'Nuevo Candidato';
+          b.innerHTML = `
+            <form onsubmit="App.saveCandidate(event)">
+              <div class="grid grid-2">
+                <div class="form-group"><label>Nombre</label><input name="nombre" required></div>
+                <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+                <div class="form-group"><label>Perfil IT</label><select name="perfil_it"><option>backend</option><option>devops</option><option>qa</option><option>integrations</option></select></div>
+                <div class="form-group"><label>Seniority</label><select name="seniority"><option>junior</option><option>mid</option><option>senior</option></select></div>
+              </div>
+              <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">Guardar</button>
+            </form>`;
+        } else if(type==='vacancy_form') {
+          t.textContent = 'Nueva Vacante';
+          b.innerHTML = `
+            <form onsubmit="App.saveVacancy(event)">
+              <div class="form-group"><label>Título</label><input name="titulo" required></div>
+              <div class="grid grid-2">
+                <div class="form-group"><label>Departamento</label><input name="departamento"></div>
+                <div class="form-group"><label>Urgencia</label><select name="urgencia"><option>media</option><option>alta</option><option>baja</option></select></div>
+              </div>
+              <div class="form-group"><label>Stack Obligatorio</label><input name="stack_obligatorio" required></div>
+              <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">Crear Vacante</button>
+            </form>`;
+        }
+      },
+      closeModal() { document.getElementById('modal').classList.remove('active'); },
+      saveCandidate(e) {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const id = Date.now().toString();
+        DB.candidates.push({ id, nombre: f.get('nombre'), email: f.get('email'), perfil_it: f.get('perfil_it'), seniority: f.get('seniority'), estado: 'activo', experiencia_total: 0, stack_lenguajes: '', cv_filename: null });
+        DB.save(); this.closeModal(); this.render('candidates');
+      },
+      saveVacancy(e) {
+        e.preventDefault();
+        const f = new FormData(e.target);
+        const count = DB.vacancies.length + 1;
+        const id = `VAC-2026-${String(count).padStart(3,'0')}`;
+        DB.vacancies.push({ id, titulo: f.get('titulo'), departamento: f.get('departamento'), ubicacion: 'Remoto', modalidad: 'Remoto_Total', urgencia: f.get('urgencia'), estado: 'abierta', stack_obligatorio: f.get('stack_obligatorio') });
+        DB.save(); this.closeModal(); this.render('vacancies');
+      },
+      viewCandidate(id) {
+        const c = DB.candidates.find(x=>x.id===id);
+        alert(`Detalle de ${c.nombre}\nID: ${c.id}\nPerfil: ${c.perfil_it.toUpperCase()}\nStack: ${c.stack_lenguajes||'No definido'}\nEstado: ${c.estado}`);
+      },
+      saveEvaluation(e) {
+        e.preventDefault();
+        const cid = document.getElementById('e-candidate').value;
+        const c = DB.candidates.find(x=>x.id===cid);
+        const r = +document.getElementById('e-r').value;
+        const s = +document.getElementById('e-s').value;
+        const t = +document.getElementById('e-t').value;
+        const score = Logic.calculateRST(r, s, t, c.perfil_it);
+        let rec = 'reservas';
+        if(score >= 8.5) rec = 'contratar';
+        else if(score >= 7.0) rec = 'siguiente_fase';
+        else if(score < 5) rec = 'descartar';
+        
+        DB.evaluations.push({ fecha: new Date().toLocaleDateString(), nombre: c.nombre, r, s, t, score, rec });
+        if(score >= 8.5) c.estado = 'finalista';
+        DB.save();
+        this.render('evaluations');
+      },
+      addTask() {
+        const input = document.getElementById('t-title');
+        if(!input.value.trim()) return;
+        DB.tasks.push({ id: Date.now(), titulo: input.value, tipo: 'tarea', prioridad: 'media', fecha_limite: '2026-12-31', estado: 'pendiente' });
+        DB.save(); this.render('tasks');
+      },
+      completeTask(id) {
+        const t = DB.tasks.find(x=>x.id===id);
+        if(t) t.estado = 'completada';
+        DB.save(); this.render('tasks');
+      },
+      resetDemo() {
+        if(confirm('¿Reiniciar datos demo?')) { localStorage.removeItem("rrhh_demo_db"); location.reload(); }
+      }
+    };
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => App.init());
+  </script>
+</body>
+</html>
