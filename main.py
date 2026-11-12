@@ -460,46 +460,37 @@ def modulo_perfiles_empresa(db: DatabaseManager):
 def modulo_presentacion_empresa():
     limpiar_pantalla()
     print("=" * 70)
-    print("   🏢 PRESENTACIÓN DE EMPRESA")
+    print("   🏢 ORGANIZACIÓN DE EJEMPLO")
     print("=" * 70)
     print("""
-ALVATROSS (Grupo SATEC)
+FICHA DE ORGANIZACIÓN · DATOS ILUSTRATIVOS
 
-Somos una empresa tecnológica especializada en soluciones de software para 
-la automatización de operaciones en telecomunicaciones, con enfoque en OSS 
-(Operational Support Systems) y plataformas digitales modernas.
+Sector:
+• Desarrollo de software y servicios tecnológicos.
 
-Pertenencia al Grupo SATEC:
-• Grupo tecnológico español con más de 25 años de experiencia
-• Presencia en proyectos globales (>15 países)
-• Solidez organizativa y comercial consolidada
+Áreas de actividad:
+• Aplicaciones empresariales y plataformas digitales.
+• Integración de sistemas y APIs.
+• Infraestructura cloud y automatización.
+• Datos, observabilidad y operaciones.
 
-Plataforma OSS:
-• Cloud-native y modular
-• Basada en estándares TM Forum Open APIs y ODA
-• Gestión integral: catálogo, inventario, orquestación, provisión
-• Despliegue flexible: cloud o on-premise
+Stack de referencia:
+• Python, Java y desarrollo web.
+• APIs REST y arquitecturas de servicios.
+• PostgreSQL y otras bases de datos relacionales.
+• Docker, Kubernetes y pipelines CI/CD.
 
-Stack tecnológico:
-• Arquitectura microservicios
-• APIs REST conformes a TM Forum
-• Compatibilidad multi-BBDD (Oracle, PostgreSQL, MySQL...)
-• DevOps y automatización de despliegues
+Entorno de trabajo:
+• Equipos multidisciplinares.
+• Prácticas de ingeniería segura y calidad de software.
+• Documentación, colaboración y mejora continua.
 
-Oficinas:
-• Madrid (Avenida de Europa, Aravaca)
-• Avilés, Asturias
-
-Cultura:
-• Colaborativa y técnica
-• Orientada a soluciones reales y aplicadas
-• Proyectos de medio/largo plazo
-• Reconocida como "Great Place to Work"
+NOTA:
+Esta ficha es ficticia y sirve únicamente como ejemplo funcional.
+No representa a una empresa, cliente o empleador real.
 """)
     print("=" * 70)
     pausa()
-
-
 def modulo_metodologias_agiles():
     limpiar_pantalla()
     print("=" * 70)
