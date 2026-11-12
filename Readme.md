@@ -1,5 +1,7 @@
 # Tactical Recruiting
 
+[![Python CI](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/ci.yml/badge.svg)](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/ci.yml) [![Pages deployment](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/pages.yml/badge.svg)](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/pages.yml)
+
 Prototipo de gestión de selección para perfiles IT y telecomunicaciones. Incluye una aplicación Python/SQLite, un banco de preguntas técnicas y una demo web estática independiente. Los datos y perfiles precargados son ilustrativos.
 
 ## Demo web pública
@@ -64,4 +66,4 @@ El workflow `.github/workflows/pages.yml` publica solo `rrhh-demo/` cuando se ac
 
 ## Licencia
 
-Consulta [LICENSE](LICENSE).
+No se ha publicado una licencia de reutilización. El repositorio es público para revisión técnica y portfolio, pero no concede por sí mismo permiso de redistribución, modificación o uso comercial.
