@@ -1,8 +1,8 @@
-# Tactical Recruiting
+# Tactical Recruiting | IT Talent Operations
 
 [![Python CI](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/ci.yml/badge.svg)](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/ci.yml) [![Pages deployment](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/pages.yml/badge.svg)](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/pages.yml)
 
-Prototipo de gestión de selección para perfiles IT y telecomunicaciones. Incluye una aplicación Python/SQLite, un banco de preguntas técnicas y una demo web estática independiente. Los datos y perfiles precargados son ilustrativos.
+Prototipo de operaciones de talento IT y telecomunicaciones, con gestión local de candidatos, evaluación técnica orientativa y demo web independiente. Incluye una aplicación Python/SQLite, un banco de preguntas técnicas y una demo web estática independiente. Los datos y perfiles precargados son ilustrativos.
 
 ## Demo web pública
 
