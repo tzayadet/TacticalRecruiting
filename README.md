@@ -17,7 +17,7 @@ El workflow publica exclusivamente el contenido de `rrhh-demo/`. No publica `mai
 | Ruta | Función |
 |---|---|
 | `main.py` + `database.py` | Aplicación de consola modular con persistencia SQLite. |
-| `FULLAPP.py` | Versión monolítica alternativa. |
+| `archive/FULLAPP.legacy.py` | Snapshot monolítico histórico; no es la aplicación mantenida ni se recomienda ejecutarlo. |
 | `models.py` | Modelos y enumeraciones. |
 | `questions.py` | Banco de preguntas de entrevista. |
 | `rrhh-demo/index.html` | Demo web estática e independiente. |
@@ -33,13 +33,7 @@ Requisitos: Python 3.10 o superior.
 python main.py
 ```
 
-También existe una versión autocontenida:
-
-```bash
-python FULLAPP.py
-```
-
-La aplicación guarda datos localmente en SQLite. El indicador de consentimiento solo se registra tras una respuesta afirmativa explícita; no constituye por sí solo una garantía de cumplimiento del RGPD ni sustituye la información, base jurídica, finalidad, conservación y derechos que correspondan. No subas CV reales, datos personales de candidatos, exportaciones ni bases de selección al repositorio público. Las carpetas locales de datos y CV están excluidas mediante `.gitignore`.
+La aplicación guarda datos localmente en SQLite. El registro modular exige una respuesta afirmativa antes de recoger datos personales o leer un CV. El prototipo solo implementa este flujo de consentimiento y no modela otras bases jurídicas. El consentimiento registrado no constituye por sí solo una garantía de cumplimiento del RGPD ni sustituye la información, finalidad, conservación, derechos y controles que correspondan. Los CV se limitan a PDF/DOC/DOCX de hasta 10 MB y se guardan sin cifrado en el almacenamiento local. No subas CV reales, datos personales de candidatos, exportaciones ni bases de selección al repositorio público. La base SQLite y los CV locales no están cifrados. Las carpetas locales de datos y CV están excluidas mediante `.gitignore`.
 
 ## Arquitectura de la demo
 
