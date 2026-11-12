@@ -20,6 +20,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: ${{ vars.ENABLE_PAGES == 'true' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -27,18 +28,14 @@ jobs:
     steps:
       - name: Check out project source
         uses: actions/checkout@v4
-
       - name: Validate demo privacy and browser-only behavior
         run: python scripts/validate_demo.py
-
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-
       - name: Upload demo only
         uses: actions/upload-pages-artifact@v3
         with:
           path: rrhh-demo
-
       - name: Publish public demo
         id: deployment
         uses: actions/deploy-pages@v5
