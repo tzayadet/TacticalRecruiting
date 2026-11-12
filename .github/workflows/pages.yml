@@ -31,10 +31,8 @@ jobs:
       - name: Validate demo privacy and browser-only behavior
         run: python scripts/validate_demo.py
 
-      - name: Configure and enable GitHub Pages
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
 
       - name: Upload demo only
         uses: actions/upload-pages-artifact@v3
