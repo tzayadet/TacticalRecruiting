@@ -11,8 +11,7 @@ team building, normativa, tareas, calendario, onboarding, anotaciones, glosario
 import sqlite3
 from pathlib import Path
 from datetime import datetime
-import os
-import shutil
+from cv_utils import MAX_CV_BYTES, sanitize_cv_filename
 
 
 class DatabaseManager:
@@ -436,74 +435,95 @@ class DatabaseManager:
     # ========================================
     
     def crear_candidato(self, datos: dict) -> str:
-        """Crear candidato y guardar CV si existe"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        candidato_id = datetime.now().strftime("%Y%m%d%H%M%S")
+        """Create a consent-based candidate record and optionally store a bounded CV."""
+        if datos.get("gdpr_consent") not in (1, True):
+            raise ValueError(
+                "This prototype only registers candidates after explicit affirmative consent."
+            )
+
+        candidato_id = datetime.now().strftime("%Y%m%d%H%M%S%f")
         cv_filename = None
-        
-        # Guardar CV si existe
-        if datos.get('cv_data') and datos.get('cv_filename'):
-            cv_filename = f"{candidato_id}_{datos['cv_filename']}"
-            cv_path = self.cv_folder / cv_filename
-            
-            try:
-                with open(cv_path, 'wb') as f:
-                    f.write(datos['cv_data'])
-            except Exception as e:
-                print(f"⚠️  Error guardando CV: {e}")
-                cv_filename = None
-        
-        cursor.execute('''
-            INSERT INTO candidatos (
-                id, nombre, email, telefono, linkedin, github, localizacion,
-                remoto, disponibilidad, nivel_estudios, titulacion, certificaciones,
-                idiomas, experiencia_total, experiencia_telecom,
-                stack_lenguajes, stack_frameworks, stack_bbdd, stack_cloud,
-                stack_devops, stack_apis, competencias, salario_esperado,
-                estado, perfil_it, seniority, cv_filename, gdpr_consent,
-                fecha_registro, origen, notas
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                      ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (
+        cv_path = None
+        cv_data = datos.get("cv_data")
+        supplied_filename = datos.get("cv_filename")
+
+        if cv_data is not None or supplied_filename is not None:
+            if not isinstance(cv_data, (bytes, bytearray)) or not supplied_filename:
+                raise ValueError("CV content and filename must be provided together.")
+            if len(cv_data) > MAX_CV_BYTES:
+                raise ValueError(
+                    f"CV exceeds the {MAX_CV_BYTES // (1024 * 1024)} MB size limit."
+                )
+
+            safe_name = sanitize_cv_filename(str(supplied_filename))
+            cv_filename = f"{candidato_id}_{safe_name}"
+            cv_root = self.cv_folder.resolve()
+            cv_path = (cv_root / cv_filename).resolve()
+            if cv_path.parent != cv_root:
+                raise ValueError("CV destination escaped the configured storage directory.")
+            with cv_path.open("xb") as handle:
+                handle.write(cv_data)
+
+        columns = (
+            "id, nombre, email, telefono, linkedin, github, localizacion, "
+            "remoto, disponibilidad, nivel_estudios, titulacion, certificaciones, "
+            "idiomas, experiencia_total, experiencia_telecom, stack_lenguajes, "
+            "stack_frameworks, stack_bbdd, stack_cloud, stack_devops, stack_apis, "
+            "competencias, salario_esperado, estado, perfil_it, seniority, "
+            "cv_filename, gdpr_consent, fecha_registro, origen, notas"
+        )
+        placeholders = ", ".join("?" for _ in range(31))
+        values = (
             candidato_id,
-            datos.get('nombre'),
-            datos.get('email'),
-            datos.get('telefono'),
-            datos.get('linkedin'),
-            datos.get('github'),
-            datos.get('localizacion'),
-            datos.get('remoto'),
-            datos.get('disponibilidad'),
-            datos.get('nivel_estudios'),
-            datos.get('titulacion'),
-            datos.get('certificaciones'),
-            datos.get('idiomas'),
-            datos.get('experiencia_total', 0),
-            datos.get('experiencia_telecom', 0),
-            datos.get('stack_lenguajes'),
-            datos.get('stack_frameworks'),
-            datos.get('stack_bbdd'),
-            datos.get('stack_cloud'),
-            datos.get('stack_devops'),
-            datos.get('stack_apis'),
-            datos.get('competencias'),
-            datos.get('salario_esperado'),
-            'activo',
-            datos.get('perfil_it'),
-            datos.get('seniority'),
+            datos.get("nombre"),
+            datos.get("email"),
+            datos.get("telefono"),
+            datos.get("linkedin"),
+            datos.get("github"),
+            datos.get("localizacion"),
+            datos.get("remoto"),
+            datos.get("disponibilidad"),
+            datos.get("nivel_estudios"),
+            datos.get("titulacion"),
+            datos.get("certificaciones"),
+            datos.get("idiomas"),
+            datos.get("experiencia_total", 0),
+            datos.get("experiencia_telecom", 0),
+            datos.get("stack_lenguajes"),
+            datos.get("stack_frameworks"),
+            datos.get("stack_bbdd"),
+            datos.get("stack_cloud"),
+            datos.get("stack_devops"),
+            datos.get("stack_apis"),
+            datos.get("competencias"),
+            datos.get("salario_esperado"),
+            "activo",
+            datos.get("perfil_it"),
+            datos.get("seniority"),
             cv_filename,
-            datos.get('gdpr_consent', 0),
+            1,
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            datos.get('origen', 'manual'),
-            datos.get('notas', '')
-        ))
-        
-        conn.commit()
-        conn.close()
+            datos.get("origen", "manual"),
+            datos.get("notas", ""),
+        )
+
+        conn = sqlite3.connect(self.db_path)
+        try:
+            conn.execute(
+                f"INSERT INTO candidatos ({columns}) VALUES ({placeholders})",
+                values,
+            )
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            if cv_path is not None:
+                cv_path.unlink(missing_ok=True)
+            raise
+        finally:
+            conn.close()
+
         return candidato_id
-    
+
     def obtener_candidato(self, candidato_id: str) -> dict:
         """Obtener candidato por ID"""
         conn = sqlite3.connect(self.db_path)
@@ -540,11 +560,25 @@ class DatabaseManager:
         return [dict(row) for row in resultados]
     
     def obtener_ruta_cv(self, candidato_id: str) -> str:
-        """Obtener ruta absoluta del CV de un candidato"""
+        """Return a stored CV path only when it remains inside the CV directory."""
         candidato = self.obtener_candidato(candidato_id)
-        if candidato and candidato.get('cv_filename'):
-            return str(self.cv_folder / candidato['cv_filename'])
-        return None
+        if not candidato or not candidato.get("cv_filename"):
+            return None
+
+        filename = candidato["cv_filename"]
+        if not isinstance(filename, str) or "/" in filename or "\\" in filename:
+            return None
+        try:
+            if sanitize_cv_filename(filename) != filename:
+                return None
+        except ValueError:
+            return None
+
+        cv_root = self.cv_folder.resolve()
+        cv_path = (cv_root / filename).resolve()
+        if cv_path.parent != cv_root or not cv_path.is_file():
+            return None
+        return str(cv_path)
     
     # ========================================
     # CRUD VACANTES
