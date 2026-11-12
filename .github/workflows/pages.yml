@@ -16,6 +16,8 @@ concurrency:
 
 jobs:
   deploy:
+    # GitHub Pages is configured only for public repositories in this portfolio.
+    if: ${{ github.event.repository.private == false }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
