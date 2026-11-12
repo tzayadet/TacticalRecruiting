@@ -1,6 +1,6 @@
 # Tactical Recruiting
 
-Prototipo de gestión de procesos de selección orientado a perfiles IT y telecomunicaciones. El repositorio público contiene la aplicación Python/SQLite, el código de desarrollo y una demo web estática independiente.
+Prototipo de gestión de selección para perfiles IT y telecomunicaciones. Incluye una aplicación Python/SQLite, un banco de preguntas técnicas y una demo web estática independiente. Los datos y perfiles precargados son ilustrativos.
 
 ## Demo web pública
 
@@ -19,7 +19,9 @@ El workflow publica exclusivamente el contenido de `rrhh-demo/`. No publica `mai
 | `models.py` | Modelos y enumeraciones. |
 | `questions.py` | Banco de preguntas de entrevista. |
 | `rrhh-demo/index.html` | Demo web estática e independiente. |
-| `docs/legacy-specification-2026-01.md` | Especificación histórica del proyecto. |
+| `scripts/validate_demo.py` | Validaciones de privacidad y comportamiento de la demo. |
+| `tests/` | Pruebas automáticas de inicialización y operaciones básicas. |
+| `docs/legacy-specification-2026-01.md` | Diseño funcional histórico, anonimizado y no normativo. |
 
 ## Ejecutar la aplicación local
 
@@ -35,7 +37,7 @@ También existe una versión autocontenida:
 python FULLAPP.py
 ```
 
-La aplicación guarda datos localmente en SQLite. No subas CV reales, datos personales de candidatos ni bases de selección al repositorio público.
+La aplicación guarda datos localmente en SQLite. No subas CV reales, datos personales de candidatos, exportaciones ni bases de selección al repositorio público. Las carpetas locales de datos y CV están excluidas mediante `.gitignore`.
 
 ## Arquitectura de la demo
 
@@ -51,7 +53,8 @@ La aplicación guarda datos localmente en SQLite. No subas CV reales, datos pers
 - Es un prototipo, no un ATS listo para producción.
 - La demo web es una simulación local con datos ficticios.
 - La aplicación de consola y la demo no comparten backend ni base de datos.
-- No todos los módulos descritos en la especificación histórica están implementados.
+- La especificación histórica contiene ideas y módulos que pueden no estar implementados en el código actual.
+- Los rangos salariales y perfiles precargados son ejemplos orientativos, no datos de mercado ni ofertas reales.
 - No utilices el scoring como criterio automático de selección ni como sustituto de una evaluación humana.
 - Antes de usar el sistema con personas reales hacen falta controles de acceso, cifrado, retención, trazabilidad, protección de datos y revisión jurídica.
 
