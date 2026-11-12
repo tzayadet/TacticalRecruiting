@@ -26,7 +26,7 @@ CVS_DIR = APP_DIR / "cvs"
 APP_DIR.mkdir(exist_ok=True)
 CVS_DIR.mkdir(exist_ok=True)
 
-# Perfiles IT especializados (stack Alvatross/TM Forum)
+# Perfiles IT de ejemplo orientados a software y telecomunicaciones
 PERFILES_IT = {
     'backend': 'Backend / Full Stack Developer',
     'frontend': 'Front-End Developer',
@@ -46,7 +46,7 @@ SENIORITY_NIVELES = {
     'lead': 'Lead / Manager'
 }
 
-# Ponderación R/S/T por perfil (según guía Alvatross)
+# Ponderación R/S/T ilustrativa por perfil
 PONDERACION_RST = {
     'backend': (0.20, 0.60, 0.20),
     'devops': (0.20, 0.60, 0.20),
@@ -93,7 +93,7 @@ def formatear_fecha(fecha_str):
 # ========================================
 
 def inicializar_db():
-    """Crear esquema completo + sembrar datos reales de perfiles IT Alvatross"""
+    """Crear esquema completo + sembrar perfiles IT de ejemplo"""
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
@@ -376,10 +376,10 @@ def inicializar_db():
     ''')
     
     # ========================================
-    # SEMBRAR DATOS REALES DE ALVATROSS (perfiles IT especializados)
+    # SEMBRAR DATOS DE EJEMPLO (perfiles IT especializados)
     # ========================================
     
-    # Perfiles empresa con stack TM Forum/ODA real
+    # Perfiles de ejemplo con estándares de telecomunicaciones
     cursor.execute('SELECT COUNT(*) FROM perfiles_empresa')
     if cursor.fetchone()[0] == 0:
         perfiles = [
@@ -432,7 +432,7 @@ def inicializar_db():
              'Enfoque en interoperabilidad, trazabilidad total, calidad contratos APIs, documentación clara'),
             
             ('Solution / Software Architect',
-             'Diseño arquitecturas solución para proyectos OSS/BSS con clientes operadores',
+             'Diseño de arquitecturas para plataformas de telecomunicaciones y sistemas empresariales',
              'Arquitectura ODA, microservicios, TM Forum APIs, patrones diseño, cloud-native',
              'Diseño sistemas escalables alto volumen, cumplimiento estándares TM Forum/ODA, gobernanza APIs',
              'senior',
@@ -463,7 +463,7 @@ def inicializar_db():
              30000,
              42000,
              'Soporte sistemas (2+ años), Linux, BBDD, redes básicas, troubleshooting',
-             'Experiencia OSS/BSS, conocimiento plataforma Alvatross, telecom',
+             'Experiencia en plataformas OSS/BSS y telecomunicaciones',
              'Calma bajo presión, método sistemático (hipótesis→pruebas→acción), documenta para evitar recurrencias',
              'Enfoque en continuidad servicio, respuesta rápida incidencias, mejora continua procesos')
         ]
@@ -1539,46 +1539,37 @@ def modulo_perfiles_empresa():
 def modulo_presentacion_empresa():
     limpiar_pantalla()
     print("=" * 70)
-    print("   🏢 PRESENTACIÓN DE EMPRESA")
+    print("   🏢 ORGANIZACIÓN DE EJEMPLO")
     print("=" * 70)
     print("""
-ALVATROSS (Grupo SATEC)
+FICHA DE ORGANIZACIÓN · DATOS ILUSTRATIVOS
 
-Somos una empresa tecnológica especializada en soluciones de software para 
-la automatización de operaciones en telecomunicaciones, con enfoque en OSS 
-(Operational Support Systems) y plataformas digitales modernas.
+Sector:
+• Desarrollo de software y servicios tecnológicos.
 
-Pertenencia al Grupo SATEC:
-• Grupo tecnológico español con más de 25 años de experiencia
-• Presencia en proyectos globales (>15 países)
-• Solidez organizativa y comercial consolidada
+Áreas de actividad:
+• Aplicaciones empresariales y plataformas digitales.
+• Integración de sistemas y APIs.
+• Infraestructura cloud y automatización.
+• Datos, observabilidad y operaciones.
 
-Plataforma OSS:
-• Cloud-native y modular
-• Basada en estándares TM Forum Open APIs y ODA
-• Gestión integral: catálogo, inventario, orquestación, provisión
-• Despliegue flexible: cloud o on-premise
+Stack de referencia:
+• Python, Java y desarrollo web.
+• APIs REST y arquitecturas de servicios.
+• PostgreSQL y otras bases de datos relacionales.
+• Docker, Kubernetes y pipelines CI/CD.
 
-Stack tecnológico:
-• Arquitectura microservicios
-• APIs REST conformes a TM Forum
-• Compatibilidad multi-BBDD (Oracle, PostgreSQL, MySQL...)
-• DevOps y automatización de despliegues
+Entorno de trabajo:
+• Equipos multidisciplinares.
+• Prácticas de ingeniería segura y calidad de software.
+• Documentación, colaboración y mejora continua.
 
-Oficinas:
-• Madrid (Avenida de Europa, Aravaca)
-• Avilés, Asturias
-
-Cultura:
-• Colaborativa y técnica
-• Orientada a soluciones reales y aplicadas
-• Proyectos de medio/largo plazo
-• Reconocida como "Great Place to Work"
+NOTA:
+Esta ficha es ficticia y sirve únicamente como ejemplo funcional.
+No representa a una empresa, cliente o empleador real.
 """)
     print("=" * 70)
     pausa()
-
-
 def modulo_metodologias_agiles():
     limpiar_pantalla()
     print("=" * 70)
@@ -2737,12 +2728,12 @@ if __name__ == "__main__":
     print("\n💡 Características clave:")
     print("   • Scoring R/S/T automático con ponderación por perfil IT")
     print("   • Banco de preguntas especializado por perfil (Backend, DevOps, QA...)")
-    print("   • Perfiles empresa con stack TM Forum/ODA real")
+    print("   • Perfiles de ejemplo con estándares de telecomunicaciones")
     print("   • Almacenamiento real de CVs (PDF/DOC/DOCX)")
     print("   • Checklist de 'señales de buen encaje' por perfil")
     print("   • 20 módulos completos listos para usar")
     print("   • Sin nombre asignado (solo 'Aplicación Integral de Selección')")
-    print("   • Sin referencias a Alvatross fuera del módulo de presentación")
+    print("   • Sin referencias a organizaciones externas en los módulos restantes")
     pausa()
     
     # Ejecutar menú principal
