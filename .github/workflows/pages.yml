@@ -28,13 +28,13 @@ jobs:
       - name: Check out private source repository
         uses: actions/checkout@v4
 
+      - name: Validate demo privacy and browser-only behavior
+        run: python scripts/validate_demo.py
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
-
-      - name: Validate demo privacy and browser-only behavior
-        run: python scripts/validate_demo.py
 
       - name: Upload demo only
         uses: actions/upload-pages-artifact@v3
