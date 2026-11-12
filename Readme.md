@@ -39,7 +39,7 @@ También existe una versión autocontenida:
 python FULLAPP.py
 ```
 
-La aplicación guarda datos localmente en SQLite. No subas CV reales, datos personales de candidatos, exportaciones ni bases de selección al repositorio público. Las carpetas locales de datos y CV están excluidas mediante `.gitignore`.
+La aplicación guarda datos localmente en SQLite. El indicador de consentimiento solo se registra tras una respuesta afirmativa explícita; no constituye por sí solo una garantía de cumplimiento del RGPD ni sustituye la información, base jurídica, finalidad, conservación y derechos que correspondan. No subas CV reales, datos personales de candidatos, exportaciones ni bases de selección al repositorio público. Las carpetas locales de datos y CV están excluidas mediante `.gitignore`.
 
 ## Arquitectura de la demo
 
