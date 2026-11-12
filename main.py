@@ -13,11 +13,12 @@ from datetime import datetime
 # Importar gestor de base de datos
 try:
     from database import DatabaseManager
-from consent import parse_consent
 except ImportError:
     print("❌ Error: archivo 'database.py' no encontrado.")
     print("   Coloca database.py y main.py en la misma carpeta y ejecuta de nuevo.")
     sys.exit(1)
+
+from consent import parse_consent
 
 
 # ========================================
