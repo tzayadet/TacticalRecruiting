@@ -64,7 +64,7 @@ class DatabaseManagerTests(unittest.TestCase):
         candidate_id = self.db.crear_candidato({
             "nombre": "CV Test",
             "gdpr_consent": 1,
-            "cv_data": b"%PDF-1.4\\nsynthetic test file",
+            "cv_data": b"%PDF-1.4\nsynthetic test file",
             "cv_filename": "../../outside.pdf",
         })
         cv_path = Path(self.db.obtener_ruta_cv(candidate_id))
