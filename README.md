@@ -1,24 +1,29 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/IT_TALENT_OPERATIONS-TACTICAL_RECRUITING-101010?style=for-the-badge&labelColor=050805&color=00FF41" alt="Tactical Recruiting"/>
+  <img src="https://img.shields.io/badge/PYTHON-SQLITE-101010?style=for-the-badge&logo=python&logoColor=00FF41" alt="Python"/>
+</p>
+
 # Tactical Recruiting
 
-A local-first prototype for IT talent operations. It combines a Python application with SQLite persistence, a technical interview question bank and a separate static web showcase.
+Local-first prototype for IT talent operations. It combines a Python application, SQLite persistence, a technical interview question bank and a separate static browser showcase.
 
 <p align="center">
-  <a href="https://github.com/tzayadet/TacticalRecruiting"><img src="https://img.shields.io/badge/SOURCE-GITHUB-161b22?style=flat-square&logo=github" alt="Source code"></a>
-  <a href="rrhh-demo/index.html"><img src="https://img.shields.io/badge/SHOWCASE-SOURCE-00a86b?style=flat-square" alt="Showcase source"></a>
+  <a href="https://github.com/tzayadet/TacticalRecruiting"><strong>SOURCE CODE</strong></a> ·
+  <a href="https://github.com/tzayadet/TacticalRecruiting/tree/main/rrhh-demo"><strong>STATIC SHOWCASE SOURCE</strong></a>
 </p>
 
 [![Python CI](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/ci.yml/badge.svg)](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/ci.yml) · [![Pages deployment](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/pages.yml/badge.svg)](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/pages.yml)
 
-## What it does
+## Features
 
-- Organizes candidate records in a local SQLite database.
+- Organises candidate records in a local SQLite database.
 - Provides a technical question bank for IT recruitment workflows.
 - Separates the Python application from the browser-based showcase.
 - Uses illustrative candidate profiles and sample records in the static demo.
 
 ## Run locally
 
-**Requirements:** Python 3.10 or later.
+**Requirements:** Python 3.10+.
 
 ```bash
 python main.py
@@ -26,7 +31,7 @@ python main.py
 
 The application stores data locally in SQLite. Candidate CV files and local databases are excluded from version control. Do not add real candidate records, CVs, exports or personal data to this public repository.
 
-## Project structure
+## Project layout
 
 | Path | Purpose |
 |---|---|
@@ -41,7 +46,7 @@ The application stores data locally in SQLite. Candidate CV files and local data
 
 The static showcase is in `rrhh-demo/`. It uses fictional data and browser-local storage. It does not connect to the Python application or SQLite database and does not send records to a server.
 
-The Pages workflow publishes only `rrhh-demo/`, not the backend, local database or internal files. GitHub Pages still needs to be enabled in repository settings and the `ENABLE_PAGES=true` Actions variable configured before the deployment can be considered live.
+The Pages workflow publishes only `rrhh-demo/`, not the backend, local database or internal files. To publish it, enable GitHub Pages with GitHub Actions in repository settings and configure the `ENABLE_PAGES=true` Actions variable.
 
 ## Scope and limitations
 
