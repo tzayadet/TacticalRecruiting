@@ -23,6 +23,7 @@ checks = {
         re.I,
     ),
     "browser-local storage only": "localStorage" in html,
+    "visible synthetic-data warning": "DEMO / DATOS FICTICIOS" in html,
     "no remote script imports": not re.search(
         r"<script\b[^>]*\bsrc\s*=\s*['\"]https?://",
         html,
