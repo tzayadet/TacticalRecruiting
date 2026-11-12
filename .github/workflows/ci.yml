@@ -22,8 +22,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Compile application modules
-        run: python -m compileall -q main.py database.py models.py questions.py FULLAPP.py consent.py scripts tests
+      - name: Compile maintained application modules
+        run: python -m compileall -q main.py database.py models.py questions.py consent.py cv_utils.py scripts tests
 
       - name: Run smoke tests
         run: python -m unittest discover -s tests -v
