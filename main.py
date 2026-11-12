@@ -88,10 +88,10 @@ def registrar_candidato(db: DatabaseManager):
     print("=" * 70)
     
     gdpr = parse_consent(
-        input("\\n¿Se ha obtenido consentimiento explícito para registrar y tratar estos datos en este prototipo? (s/N): ")
+        input("\n¿Se ha obtenido consentimiento explícito para registrar y tratar estos datos en este prototipo? (s/N): ")
     )
     if not gdpr:
-        print("\\nRegistro cancelado. No se ha leído ningún CV ni se han guardado datos personales.")
+        print("\nRegistro cancelado. No se ha leído ningún CV ni se han guardado datos personales.")
         pausa()
         return
 
