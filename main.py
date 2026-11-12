@@ -19,6 +19,7 @@ except ImportError:
     sys.exit(1)
 
 from consent import parse_consent
+from cv_utils import validate_cv_path
 
 
 # ========================================
@@ -34,17 +35,15 @@ def pausa():
 
 
 def leer_archivo_cv(ruta: str) -> tuple:
-    """Leer archivo CV y devolver datos binarios + nombre"""
-    if not ruta or not os.path.exists(ruta):
+    """Read a supported CV after validating its extension and size."""
+    if not ruta:
         return None, None
-    
+
     try:
-        with open(ruta, 'rb') as f:
-            datos = f.read()
-        nombre = os.path.basename(ruta)
-        return datos, nombre
-    except Exception as e:
-        print(f"⚠️  Error leyendo CV: {e}")
+        path = validate_cv_path(ruta)
+        return path.read_bytes(), path.name
+    except (OSError, ValueError) as exc:
+        print(f"⚠️  CV no válido: {exc}")
         return None, None
 
 
@@ -88,7 +87,15 @@ def registrar_candidato(db: DatabaseManager):
     print("   🆕 REGISTRAR NUEVO CANDIDATO")
     print("=" * 70)
     
-    datos = {}
+    gdpr = parse_consent(
+        input("\\n¿Se ha obtenido consentimiento explícito para registrar y tratar estos datos en este prototipo? (s/N): ")
+    )
+    if not gdpr:
+        print("\\nRegistro cancelado. No se ha leído ningún CV ni se han guardado datos personales.")
+        pausa()
+        return
+
+    datos = {"gdpr_consent": 1}
     while not datos.get('nombre'):
         datos['nombre'] = input("\nNombre completo*: ").strip()
         if not datos['nombre']:
@@ -136,7 +143,7 @@ def registrar_candidato(db: DatabaseManager):
     # Subir CV
     print("\n¿Deseas adjuntar CV? (S/n): ", end="")
     if input().strip().lower() in ('', 's', 'si', 'y', 'yes'):
-        ruta_cv = input("Ruta completa al archivo CV (PDF/DOC): ").strip()
+        ruta_cv = input("Ruta completa al archivo CV (PDF/DOC/DOCX, máximo 10 MB): ").strip()
         cv_data, cv_filename = leer_archivo_cv(ruta_cv)
         if cv_data and cv_filename:
             datos['cv_data'] = cv_data
