@@ -1,69 +1,60 @@
-# Tactical Recruiting | IT Talent Operations
+# Tactical Recruiting
 
-[![Python CI](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/ci.yml/badge.svg)](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/ci.yml) [![Pages deployment](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/pages.yml/badge.svg)](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/pages.yml)
+A local-first prototype for IT talent operations. It combines a Python application with SQLite persistence, a technical interview question bank and a separate static web showcase.
 
-Prototipo de operaciones de talento IT y telecomunicaciones, con gestión local de candidatos, evaluación técnica orientativa y demo web independiente. Incluye una aplicación Python/SQLite, un banco de preguntas técnicas y una demo web estática independiente. Los datos y perfiles precargados son ilustrativos.
+<p align="center">
+  <a href="https://github.com/tzayadet/TacticalRecruiting"><img src="https://img.shields.io/badge/SOURCE-GITHUB-161b22?style=flat-square&logo=github" alt="Source code"></a>
+  <a href="rrhh-demo/index.html"><img src="https://img.shields.io/badge/SHOWCASE-SOURCE-00a86b?style=flat-square" alt="Showcase source"></a>
+</p>
 
-## Demo web pública
+[![Python CI](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/ci.yml/badge.svg)](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/ci.yml) · [![Pages deployment](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/pages.yml/badge.svg)](https://github.com/tzayadet/TacticalRecruiting/actions/workflows/pages.yml)
 
-**URL:** https://tzayadet.github.io/TacticalRecruiting/
+## What it does
 
-La demo estática está en `rrhh-demo/`. El workflow publica exclusivamente esa carpeta, nunca el backend Python, los modelos, la documentación interna ni los datos locales.
+- Organizes candidate records in a local SQLite database.
+- Provides a technical question bank for IT recruitment workflows.
+- Separates the Python application from the browser-based showcase.
+- Uses illustrative candidate profiles and sample records in the static demo.
 
-Para habilitar la primera publicación:
+## Run locally
 
-1. En **Settings → Pages**, selecciona **GitHub Actions** como origen.
-2. En **Settings → Secrets and variables → Actions → Variables**, crea `ENABLE_PAGES` con valor `true`.
-3. Ejecuta **Deploy sanitized Tactical Recruiting demo to GitHub Pages** desde Actions.
-
-La demo usa datos ficticios y almacenamiento local del navegador. No se conecta a la aplicación Python ni a SQLite.
-
-## Componentes
-
-| Ruta | Función |
-|---|---|
-| `main.py` + `database.py` | Aplicación de consola modular con persistencia SQLite. |
-| `archive/FULLAPP.legacy.py` | Snapshot monolítico histórico; no es la aplicación mantenida ni se recomienda ejecutarlo. |
-| `models.py` | Modelos y enumeraciones. |
-| `questions.py` | Banco de preguntas de entrevista. |
-| `rrhh-demo/index.html` | Demo web estática e independiente. |
-| `scripts/validate_demo.py` | Validaciones de privacidad y comportamiento de la demo. |
-| `tests/` | Pruebas automáticas de inicialización y operaciones básicas. |
-| `docs/legacy-specification-2026-01.md` | Diseño funcional histórico, anonimizado y no normativo. |
-
-## Ejecutar la aplicación local
-
-Requisitos: Python 3.10 o superior.
+**Requirements:** Python 3.10 or later.
 
 ```bash
 python main.py
 ```
 
-La aplicación guarda datos localmente en SQLite. El registro modular exige una respuesta afirmativa antes de recoger datos personales o leer un CV. El prototipo solo implementa este flujo de consentimiento y no modela otras bases jurídicas. El consentimiento registrado no constituye por sí solo una garantía de cumplimiento del RGPD ni sustituye la información, finalidad, conservación, derechos y controles que correspondan. Los CV se limitan a PDF/DOC/DOCX de hasta 10 MB y se guardan sin cifrado en el almacenamiento local. No subas CV reales, datos personales de candidatos, exportaciones ni bases de selección al repositorio público. La base SQLite y los CV locales no están cifrados. Las carpetas locales de datos y CV están excluidas mediante `.gitignore`.
+The application stores data locally in SQLite. Candidate CV files and local databases are excluded from version control. Do not add real candidate records, CVs, exports or personal data to this public repository.
 
-## Arquitectura de la demo
+## Project structure
 
-- Es una aplicación estática ejecutada en el navegador.
-- Utiliza registros ficticios con direcciones reservadas de ejemplo.
-- Guarda el estado en `localStorage` del navegador.
-- No se conecta a la base SQLite ni al backend Python.
-- No tiene autenticación, API ni persistencia compartida.
-- No envía datos a un servidor.
+| Path | Purpose |
+|---|---|
+| `main.py`, `database.py` | Modular Python application and SQLite persistence |
+| `models.py` | Data models and enumerations |
+| `questions.py` | Technical interview question bank |
+| `rrhh-demo/` | Independent static showcase |
+| `tests/` | Automated tests |
+| `.github/workflows/` | CI and Pages deployment |
 
-## Alcance y limitaciones
+## Showcase and deployment
 
-- Es un prototipo, no un ATS listo para producción.
-- La demo web es una simulación local con datos ficticios.
-- La aplicación de consola y la demo no comparten backend ni base de datos.
-- La especificación histórica contiene ideas y módulos que pueden no estar implementados en el código actual.
-- Los rangos salariales y perfiles precargados son ejemplos orientativos, no datos de mercado ni ofertas reales.
-- No utilices el scoring como criterio automático de selección ni como sustituto de una evaluación humana.
-- Antes de usar el sistema con personas reales hacen falta controles de acceso, cifrado, retención, trazabilidad, protección de datos y revisión jurídica.
+The static showcase is in `rrhh-demo/`. It uses fictional data and browser-local storage. It does not connect to the Python application or SQLite database and does not send records to a server.
 
-## Despliegue
+The Pages workflow publishes only `rrhh-demo/`, not the backend, local database or internal files. GitHub Pages still needs to be enabled in repository settings and the `ENABLE_PAGES=true` Actions variable configured before the deployment can be considered live.
 
-El workflow `.github/workflows/pages.yml` publica solo `rrhh-demo/` cuando Pages está habilitado y la variable `ENABLE_PAGES=true` está configurada. Consulta los pasos de **Demo web pública**.
+## Scope and limitations
 
-## Licencia
+This is a prototype, not a production applicant tracking system (ATS). The web showcase and Python application are independent components; they do not share an API or database. The local application does not provide production-grade encryption, access control, retention management or audit controls.
 
-No se ha publicado una licencia de reutilización. El repositorio es público para revisión técnica y portfolio, pero no concede por sí mismo permiso de redistribución, modificación o uso comercial.
+Any scoring or evaluation output is advisory and must not be used as an automated hiring decision. Before handling real candidate data, the application would require a full privacy, security and legal review.
+
+## Tests
+
+```bash
+python -m pytest
+```
+
+## License
+
+No reuse license is currently declared. Public visibility does not grant permission to redistribute, modify or use the project commercially.
