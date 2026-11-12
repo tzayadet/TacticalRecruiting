@@ -3,8 +3,13 @@
 """
 APLICACIÓN INTEGRAL DE SELECCIÓN Y RECLUTAMIENTO
 20 módulos completos + scoring R/S/T automático + perfiles IT especializados
-⚠️  EJECUTA ESTE ÚNICO ARCHIVO. Sin dependencias externas.
+⚠️  SNAPSHOT HISTÓRICO. No ejecutar: la versión mantenida es main.py.
 """
+
+raise SystemExit(
+    "FULLAPP.legacy.py es un snapshot histórico archivado. "
+    "Ejecuta main.py para usar la aplicación mantenida."
+)
 
 import sqlite3
 import os
