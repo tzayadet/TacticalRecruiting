@@ -14,7 +14,6 @@ import base64
 from pathlib import Path
 from datetime import datetime, timedelta
 import re
-from consent import parse_consent
 
 
 # ========================================
@@ -728,8 +727,8 @@ def crear_candidato():
             print("⚠️  Archivo no encontrado.")
     
     datos['notas'] = input("\nNotas iniciales (stack específico, proyectos OSS/BSS...): ").strip()
-    gdpr = input("\n¿Se ha obtenido y registrado consentimiento explícito? (s/N): ")
-    datos['gdpr_consent'] = parse_consent(gdpr)
+    gdpr = input("\n¿Se ha obtenido y registrado consentimiento explícito? (s/N): ").strip().casefold()
+    datos['gdpr_consent'] = 1 if gdpr in ('s', 'si', 'sí', 'y', 'yes') else 0
     datos['origen'] = 'manual'
     datos['estado'] = 'activo'
     datos['fecha_registro'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
