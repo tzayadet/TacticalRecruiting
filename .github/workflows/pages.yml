@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "rrhh-demo/**"
+      - "scripts/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -31,6 +32,9 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
+      - name: Validate demo privacy and browser-only behavior
+        run: python scripts/validate_demo.py
 
       - name: Upload demo only
         uses: actions/upload-pages-artifact@v3
