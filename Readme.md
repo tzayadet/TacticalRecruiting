@@ -1,14 +1,14 @@
 # Tactical Recruiting
 
-Prototipo de gestión de procesos de selección orientado a perfiles IT y telecomunicaciones. El repositorio privado conserva la aplicación Python/SQLite y el código de desarrollo.
+Prototipo de gestión de procesos de selección orientado a perfiles IT y telecomunicaciones. El repositorio público contiene la aplicación Python/SQLite, el código de desarrollo y una demo web estática independiente.
 
 ## Demo web pública
 
 **URL prevista:** https://tzayadet.github.io/TacticalRecruiting/
 
-La publicación está preparada mediante GitHub Actions. Requiere activar GitHub Pages una vez en **Settings → Pages → Build and deployment → Source: GitHub Actions**. El conector no tiene permisos administrativos para crear esa configuración por ti.
+La publicación está preparada mediante GitHub Actions. El repositorio es público, pero el sitio de GitHub Pages aún no está habilitado. Activa **Settings → Pages → Build and deployment → Source: GitHub Actions** para publicar la demo.
 
-El workflow publica exclusivamente el contenido de `rrhh-demo/`. No publica `main.py`, `FULLAPP.py`, `database.py`, modelos, documentación interna ni datos locales.
+El workflow publica exclusivamente el contenido de `rrhh-demo/`. No publica `main.py`, `FULLAPP.py`, `database.py`, modelos, documentación interna ni datos locales en el sitio web. Esos archivos sí son visibles en el repositorio público.
 
 ## Componentes
 
@@ -19,7 +19,7 @@ El workflow publica exclusivamente el contenido de `rrhh-demo/`. No publica `mai
 | `models.py` | Modelos y enumeraciones. |
 | `questions.py` | Banco de preguntas de entrevista. |
 | `rrhh-demo/index.html` | Demo web estática e independiente. |
-| `docs/legacy-specification-2026-01.md` | Especificación histórica conservada en el repositorio privado. |
+| `docs/legacy-specification-2026-01.md` | Especificación histórica del proyecto. |
 
 ## Ejecutar la aplicación local
 
@@ -35,7 +35,7 @@ También existe una versión autocontenida:
 python FULLAPP.py
 ```
 
-La aplicación guarda datos localmente en SQLite. No subas CV reales, datos personales de candidatos ni bases de selección al repositorio.
+La aplicación guarda datos localmente en SQLite. No subas CV reales, datos personales de candidatos ni bases de selección al repositorio público.
 
 ## Arquitectura de la demo
 
