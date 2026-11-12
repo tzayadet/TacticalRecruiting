@@ -206,6 +206,9 @@ class QuestionBank:
     
     def buscar_por_tags(self, tags: List[str]) -> List[Dict]:
         """Buscar preguntas que contengan cualquiera de los tags proporcionados"""
+        if not tags:
+            return []
+
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
