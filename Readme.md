@@ -1,31 +1,33 @@
 # Tactical Recruiting
 
-Prototipo de gestión de procesos de selección orientado a perfiles IT y telecomunicaciones. Incluye una aplicación de consola en Python/SQLite y una demo web estática independiente.
+Prototipo de gestión de procesos de selección orientado a perfiles IT y telecomunicaciones. El repositorio privado conserva la aplicación Python/SQLite y el código de desarrollo.
+
+## Demo web pública
+
+**URL prevista:** https://tzayadet.github.io/TacticalRecruiting/
+
+La publicación está preparada mediante GitHub Actions. Requiere activar GitHub Pages una vez en **Settings → Pages → Build and deployment → Source: GitHub Actions**. El conector no tiene permisos administrativos para crear esa configuración por ti.
+
+El workflow publica exclusivamente el contenido de `rrhh-demo/`. No publica `main.py`, `FULLAPP.py`, `database.py`, modelos, documentación interna ni datos locales.
 
 ## Componentes
 
-| Archivo | Función |
+| Ruta | Función |
 |---|---|
-| `main.py` + `database.py` | Aplicación de consola modular con persistencia SQLite |
-| `FULLAPP.py` | Versión monolítica alternativa |
-| `models.py` | Modelos de datos y enumeraciones |
-| `questions.py` | Banco de preguntas de entrevista |
-| `rrhh-demo/index.html` | Demo interactiva estática con datos ficticios |
-| `index.html` | Página de entrada a la demo |
+| `main.py` + `database.py` | Aplicación de consola modular con persistencia SQLite. |
+| `FULLAPP.py` | Versión monolítica alternativa. |
+| `models.py` | Modelos y enumeraciones. |
+| `questions.py` | Banco de preguntas de entrevista. |
+| `rrhh-demo/index.html` | Demo web estática e independiente. |
+| `docs/legacy-specification-2026-01.md` | Especificación histórica conservada en el repositorio privado. |
 
-## Demo web
+## Ejecutar la aplicación local
 
-La demo estática se puede abrir directamente desde `rrhh-demo/index.html` o publicar con GitHub Pages cuando el repositorio tenga habilitado Pages. Utiliza datos de ejemplo en el navegador y no se conecta a la base de datos Python.
-
-## Aplicación de consola
-
-Requisitos: Python 3.10 o superior. La aplicación utiliza la biblioteca estándar.
+Requisitos: Python 3.10 o superior.
 
 ```bash
 python main.py
 ```
-
-Los datos locales se guardan en SQLite y los CV se almacenan en el directorio local de la aplicación. No subas datos personales, CV reales ni bases de candidatos a GitHub.
 
 También existe una versión autocontenida:
 
@@ -33,16 +35,29 @@ También existe una versión autocontenida:
 python FULLAPP.py
 ```
 
-Mantén separadas las carpetas de datos y las copias de seguridad. Antes de utilizar el prototipo con personas reales, implementa controles de acceso, cifrado de datos sensibles, retención, trazabilidad y gestión verificable del consentimiento.
+La aplicación guarda datos localmente en SQLite. No subas CV reales, datos personales de candidatos ni bases de selección al repositorio.
+
+## Arquitectura de la demo
+
+- Es una aplicación estática ejecutada en el navegador.
+- Utiliza registros ficticios con direcciones reservadas de ejemplo.
+- Guarda el estado en `localStorage` del navegador.
+- No se conecta a la base SQLite ni al backend Python.
+- No tiene autenticación, API ni persistencia compartida.
+- No envía datos a un servidor.
 
 ## Alcance y limitaciones
 
 - Es un prototipo, no un ATS listo para producción.
 - La demo web es una simulación local con datos ficticios.
 - La aplicación de consola y la demo no comparten backend ni base de datos.
-- La documentación funcional describe ideas y módulos previstos; no todos están implementados en la aplicación.
+- No todos los módulos descritos en la especificación histórica están implementados.
 - No utilices el scoring como criterio automático de selección ni como sustituto de una evaluación humana.
-- No almacenes datos reales de candidatos en una versión pública o sin controles adecuados.
+- Antes de usar el sistema con personas reales hacen falta controles de acceso, cifrado, retención, trazabilidad, protección de datos y revisión jurídica.
+
+## Despliegue
+
+El workflow `.github/workflows/pages.yml` publica solo `rrhh-demo/` cuando se activa GitHub Pages para el repositorio. La configuración de Pages debe estar habilitada en Settings → Pages.
 
 ## Licencia
 
