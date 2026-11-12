@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 models.py
-Estructuras de datos para RRHH Alvatross - perfiles IT/telecom reales
+Estructuras de datos para Tactical Recruiting - perfiles IT y telecomunicaciones
 """
 
 from dataclasses import dataclass
@@ -67,7 +67,7 @@ class Candidato:
     ultima_empresa: Optional[str] = None
     proyectos: Optional[str] = None
     
-    # Stack técnico (específico Alvatross)
+    # Stack técnico de referencia
     stack_lenguajes: Optional[str] = None  # Java, Python, TypeScript...
     stack_frameworks: Optional[str] = None  # Spring Boot, Angular, React...
     stack_bbdd: Optional[str] = None  # Oracle, PostgreSQL, MongoDB...
@@ -94,7 +94,7 @@ class Candidato:
 
 @dataclass
 class Vacante:
-    id: str  # ALV-2026-001
+    id: str  # VAC-2026-001
     titulo: str
     perfil_it: PerfilIT
     seniority: Seniority
@@ -102,7 +102,7 @@ class Vacante:
     ubicacion: str  # Madrid/Avilés/Remoto
     modalidad: str  # Remoto_Total/Remoto_Parcial/Presencial
     
-    # Requisitos técnicos (específico Alvatross)
+    # Requisitos técnicos
     stack_obligatorio: str
     stack_deseable: str
     experiencia_tmforum: str  # Obligatorio/Deseable/No_relevante
