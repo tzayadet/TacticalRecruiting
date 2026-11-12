@@ -13,6 +13,7 @@ from datetime import datetime
 # Importar gestor de base de datos
 try:
     from database import DatabaseManager
+from consent import parse_consent
 except ImportError:
     print("❌ Error: archivo 'database.py' no encontrado.")
     print("   Coloca database.py y main.py en la misma carpeta y ejecuta de nuevo.")
@@ -144,8 +145,8 @@ def registrar_candidato(db: DatabaseManager):
             print("⚠️  CV no cargado o archivo no encontrado.")
     
     datos['notas'] = input("\nNotas iniciales: ").strip()
-    gdpr = input("\n✅ Consentimiento GDPR registrado? (S/n): ").strip().lower()
-    datos['gdpr_consent'] = 1 if gdpr in ('', 's', 'si', 'yes') else 0
+    gdpr = input("\n¿Se ha obtenido y registrado consentimiento explícito? (s/N): ")
+    datos['gdpr_consent'] = parse_consent(gdpr)
     datos['origen'] = 'manual'
     
     # Guardar en BD
