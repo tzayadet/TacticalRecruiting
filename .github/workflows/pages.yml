@@ -1,4 +1,4 @@
-name: Deploy Tactical Recruiting demo to GitHub Pages
+name: Deploy sanitized Tactical Recruiting demo to GitHub Pages
 
 on:
   push:
