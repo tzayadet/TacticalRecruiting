@@ -141,9 +141,9 @@ class QuestionBank:
         ]
         
         cursor.executemany('''
-            INSERT INTO preguntas_entrevista 
-            (categoria, subcategoria, texto, ejemplo_respuesta, nivel_dificultad, tags, creada_por)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO preguntas_entrevista
+            (categoria, subcategoria, texto, ejemplo_respuesta, nivel_dificultad, tags)
+            VALUES (?, ?, ?, ?, ?, ?)
         ''', preguntas_iniciales)
         
         conn.commit()
