@@ -318,15 +318,15 @@ TACTICAL RECRUITING NETUSHIM
 |-- Derecho_Olvido (procedimiento archivado)
 |-- Retención_Datos (plazos legales)
 |-- Plantilla_Aviso_Privacidad (para emails RRHH)
-[MODULO_08] EMPRESA_ALVATROSS
+[MODULO_08] ORGANIZACION_DE_EJEMPLO
 |
 |-- [SUBMODULO] PRESENTACION_CORPORATIVA
-| |-- Quienes_Somos (misión, historia, Grupo SATEC)
+| |-- Quienes_Somos (misión, historia, organización de ejemplo)
 | |-- Plataforma_OSS (características cloud-native, TMForum, ODA)
 | |-- Stack_Tecnológico (microservicios, APIs, BBDD compatibles)
 | |-- Clientes_y_Alcance (geografía, casos uso)
-| |-- Oficinas (Madrid Aravaca, Avilés)
-| |-- Cultura (colaborativa, DevSecOps, Great Place to Work)
+| |-- Oficinas (ubicaciones de ejemplo)
+| |-- Cultura (colaborativa, DevSecOps, cultura colaborativa y mejora continua)
 | |-- Qué_Buscamos (perfil ideal candidato)
 | |-- Qué_Offeremos (estabilidad, proyectos internacionales)
 |
@@ -360,7 +360,7 @@ TACTICAL RECRUITING NETUSHIM
 [MODULO_10] GLOSARIO_TERMINOS
 |
 |-- [SUBMODULO] TERMINOS_TECNICOS_IT
-| |-- OSS/BSS (definición + contexto Alvatross)
+| |-- OSS/BSS (definición + contexto de telecomunicaciones)
 | |-- TMForum_OpenAPIs
 | |-- ODA (Open Digital Architecture)
 | |-- Cloud_Native
@@ -368,7 +368,7 @@ TACTICAL RECRUITING NETUSHIM
 | |-- DevSecOps
 | |-- CI/CD
 | |-- IaC (Infrastructure as Code)
-| |-- ... (todos términos relevantes stack Alvatross)
+| |-- ... (todos términos relevantes stack tecnológico de referencia)
 |
 |-- [SUBMODULO] TERMINOS_RRHH
 |-- Sourcing
