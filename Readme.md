@@ -8,7 +8,7 @@ Prototipo de gestión de selección para perfiles IT y telecomunicaciones. Inclu
 
 **URL prevista:** https://tzayadet.github.io/TacticalRecruiting/
 
-La publicación está preparada mediante GitHub Actions. El repositorio es público, pero el sitio de GitHub Pages aún no está habilitado. Activa **Settings → Pages → Build and deployment → Source: GitHub Actions** para publicar la demo.
+La publicación está preparada mediante GitHub Actions. El repositorio es público, pero el sitio de GitHub Pages aún no está habilitado. Activa **Settings → Pages → Build and deployment → Source: GitHub Actions** y después ejecuta **Actions → Deploy sanitized Tactical Recruiting demo to GitHub Pages → Run workflow** para lanzar la primera publicación.
 
 El workflow publica exclusivamente el contenido de `rrhh-demo/`. No publica `main.py`, `FULLAPP.py`, `database.py`, modelos, documentación interna ni datos locales en el sitio web. Esos archivos sí son visibles en el repositorio público.
 
