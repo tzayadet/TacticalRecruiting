@@ -1,0 +1,33 @@
+name: Python CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: false
+
+      - name: Compile application modules
+        run: python -m compileall -q main.py database.py models.py questions.py FULLAPP.py scripts tests
+
+      - name: Run smoke tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Validate public demo
+        run: python scripts/validate_demo.py
