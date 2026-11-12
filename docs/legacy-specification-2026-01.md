@@ -1,5 +1,7 @@
-# APP RECRUITING ALVATROSS - ESQUEMA COMPLETO
-*Última actualización: 31/01/2026 | Grupo SATEC - Alvatross*
+# TACTICAL RECRUITING · ESQUEMA FUNCIONAL HISTÓRICO
+*Documento de diseño histórico · Enero de 2026*
+
+> Archivo de referencia conceptual. Los perfiles, ubicaciones, rangos y procesos descritos son ejemplos orientativos; no representan requisitos, sistemas ni políticas de una empresa o cliente real. No es una especificación de producción ni asesoramiento jurídico.
 
 ---
 
@@ -163,7 +165,7 @@
 
 ## 📁 MÓDULO 03: EVALUACIÓN AUTOMÁTICA (R/S/T)
 
-### Rúbrica RST Alvatross
+### Rúbrica RST organización de ejemplo
 - **Dimensión R (Entrevista / Comunicación)**
   - Puntuación (1-10)
   - Criterios Guía:
@@ -357,17 +359,17 @@
 ### Cumplimiento GDPR / LOPD-GDD
 - Registro Actividades Tratamiento (art. 30 RGPD)
 - Consentimientos Candidatos (registro fechas + scope)
-- Derecho Olvido (procedimiento archivado a los 2 años)
-- Retención Datos (plazos legales: 2 años post-proceso)
+- Derecho Olvido (procedimiento definido según la política de retención aplicable)
+- Retención Datos (plazos definidos según la finalidad y la normativa aplicable)
 - Plantilla Aviso Privacidad (para emails RRHH)
 
 ---
 
-## 📁 MÓDULO 08: EMPRESA ALVATROSS (Grupo SATEC)
+## 📁 MÓDULO 08: ORGANIZACIÓN DE EJEMPLO
 
 ### Presentación Corporativa
-- Quiénes Somos (misión, historia, pertenencia Grupo SATEC)
-- Plataforma OSS Alvatross (características cloud-native, TMForum, ODA)
+- Quiénes Somos (misión, historia, pertenencia organización de ejemplo)
+- Plataforma OSS de referencia (características cloud-native, TMForum, ODA)
 - Stack Tecnológico
   - Microservicios (Java/Spring Boot)
   - APIs TMForum Open APIs (SID, Party, Product)
@@ -375,8 +377,8 @@
   - Cloud (AWS, Azure)
   - DevSecOps (GitLab CI, Kubernetes, SonarQube)
 - Clientes y Alcance (geografía, casos uso telecom)
-- Oficinas (Madrid Aravaca, Avilés)
-- Cultura (colaborativa, DevSecOps, Great Place to Work)
+- Ubicaciones de ejemplo (Madrid y Asturias)
+- Cultura (colaborativa, DevSecOps, cultura colaborativa y de mejora continua)
 - Qué Buscamos (perfil ideal candidato IT/telecom)
 - Qué Ofrecemos (estabilidad, proyectos internacionales, formación)
 
@@ -426,7 +428,7 @@ Para cada rol:
 ## 📁 MÓDULO 10: GLOSARIO DE TÉRMINOS
 
 ### Términos Técnicos IT / Telecom
-- OSS/BSS (definición + contexto Alvatross)
+- OSS/BSS (definición + contexto organización de ejemplo)
 - TMForum Open APIs (SID, Party, Product Ordering)
 - ODA (Open Digital Architecture)
 - Cloud Native (12-factor apps, microservicios)
@@ -435,7 +437,7 @@ Para cada rol:
 - CI/CD (Continuous Integration / Delivery)
 - IaC (Infrastructure as Code)
 - SLA / SLO / SLI (acuerdos nivel servicio)
-- ... (todos términos relevantes stack Alvatross)
+- ... (todos términos relevantes stack organización de ejemplo)
 
 ### Términos RRHH / Recruiting
 - Sourcing (búsqueda activa candidatos)
@@ -480,7 +482,7 @@ Para cada rol:
   - [ ] Documentación onboarding (guías, normas)
   - [ ] Primer café con mentor/tutor
 - **Semana 1**
-  - [ ] Formación producto Alvatross
+  - [ ] Formación producto organización de ejemplo
   - [ ] Acceso repositorios y documentación técnica
   - [ ] Primer ticket/tarea asignada (low risk)
   - [ ] Reunión 1:1 con Tech Lead
@@ -547,8 +549,8 @@ Para cada rol:
 
 ### Requisitos Técnicos
 - Base de datos: PostgreSQL 14+ (encriptación campos sensibles: CV, emails)
-- Autenticación: SSO con Azure AD (integración Grupo SATEC)
-- Hosting: On-premise en infraestructura SATEC (cumplimiento GDPR)
+- Autenticación: SSO mediante un proveedor de identidad corporativo
+- Hosting: infraestructura cloud u on-premise según los requisitos de seguridad y cumplimiento
 - Backups: Diarios incrementales + semanales completos (retención 7 años)
 - Accesibilidad: WCAG 2.1 AA (contraste, lectores pantalla)
 - Multiidioma: ES / EN (toggle en cabecera)
