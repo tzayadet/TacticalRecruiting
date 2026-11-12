@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 questions.py
-Banco de preguntas de entrevista para RRHH Alvatross
+Banco de preguntas de entrevista para Tactical Recruiting
 Categorizado por: general, técnica (por perfil), cultural, situacional
 """
 
@@ -18,12 +18,12 @@ class QuestionBank:
         if db_path is None:
             data_dir = Path(__file__).parent / "data"
             data_dir.mkdir(exist_ok=True)
-            self.db_path = data_dir / "rrhh_alvatross.db"
+            self.db_path = data_dir / "tactical_recruiting_questions.db"
         else:
             self.db_path = Path(db_path)
         
         self._create_table()
-        self._seed_initial_questions()  # Preguntas iniciales Alvatross
+        self._seed_initial_questions()  # Preguntas iniciales de ejemplo
     
     def _create_table(self):
         """Crear tabla de preguntas si no existe"""
@@ -53,7 +53,7 @@ class QuestionBank:
         conn.close()
     
     def _seed_initial_questions(self):
-        """Sembrar preguntas iniciales específicas de Alvatross (solo si tabla vacía)"""
+        """Sembrar preguntas iniciales de ejemplo (solo si tabla vacía)"""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
@@ -63,12 +63,12 @@ class QuestionBank:
             conn.close()
             return
         
-        # Preguntas iniciales - Alvatross específico
+        # Preguntas iniciales - de ejemplo
         preguntas_iniciales = [
             # ===== GENERAL =====
             ('general', None, 'Cuéntame tu trayectoria profesional en los últimos 5 años', 
              'Busca narrativa coherente, progresión, motivaciones', 'medio', 'trayectoria,experiencia'),
-            ('general', None, '¿Por qué estás interesado en Alvatross/Grupo SATEC?', 
+            ('general', None, '¿Por qué estás interesado en esta organización?', 
              'Busca conocimiento real de la empresa, no respuesta genérica', 'medio', 'motivación,empresa'),
             ('general', None, '¿Qué sabes de nuestras soluciones OSS/BSS y el stack TM Forum?', 
              'Valida investigación previa sobre el core business', 'dificil', 'oss,bss,tmforum,investigación'),
@@ -78,7 +78,7 @@ class QuestionBank:
              'Busca colaboración real, no solo coexistencia', 'medio', 'colaboración,equipos'),
             ('cultural', None, '¿Cómo manejas los desacuerdos técnicos con compañeros o tech leads?', 
              'Busca madurez, escucha activa, enfoque en solución', 'medio', 'conflicto,resolución'),
-            ('cultural', None, 'En Alvatross valoramos proyectos de larga duración con clientes estables. ¿Cómo ves tu evolución profesional a 3-5 años?', 
+            ('cultural', None, 'En esta organización valoramos proyectos de larga duración con clientes estables. ¿Cómo ves tu evolución profesional a 3-5 años?', 
              'Busca estabilidad vs. job hopping constante', 'medio', 'estabilidad,carrera'),
             ('cultural', None, '¿Cómo explicas decisiones técnicas complejas a perfiles no técnicos (producto, cliente)?', 
              'Busca claridad, empatía, adaptación al interlocutor', 'medio', 'comunicación,empatía'),
@@ -148,7 +148,7 @@ class QuestionBank:
         
         conn.commit()
         conn.close()
-        print("✅ Banco de preguntas inicializado con preguntas Alvatross específicas")
+        print("✅ Banco de preguntas inicializado con preguntas iniciales de ejemplo")
     
     # ===== CRUD =====
     
