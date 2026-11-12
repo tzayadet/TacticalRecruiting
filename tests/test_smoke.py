@@ -5,7 +5,20 @@ import unittest
 from pathlib import Path
 
 from database import DatabaseManager
+from consent import parse_consent
 from questions import QuestionBank
+
+
+class ConsentParsingTests(unittest.TestCase):
+    def test_blank_and_negative_answers_do_not_record_consent(self):
+        for value in (None, "", " ", "n", "no"):
+            with self.subTest(value=value):
+                self.assertEqual(parse_consent(value), 0)
+
+    def test_explicit_affirmative_answers_record_consent(self):
+        for value in ("s", "si", "sí", "y", "yes", " YES "):
+            with self.subTest(value=value):
+                self.assertEqual(parse_consent(value), 1)
 
 
 class DatabaseManagerTests(unittest.TestCase):
