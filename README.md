@@ -6,11 +6,17 @@ Prototipo de operaciones de talento IT y telecomunicaciones, con gestión local 
 
 ## Demo web pública
 
-**URL prevista:** https://tzayadet.github.io/TacticalRecruiting/
+**URL:** https://tzayadet.github.io/TacticalRecruiting/
 
-La publicación está preparada mediante GitHub Actions. El repositorio es público, pero el sitio de GitHub Pages aún no está habilitado. Activa **Settings → Pages → Build and deployment → Source: GitHub Actions** y después ejecuta **Actions → Deploy sanitized Tactical Recruiting demo to GitHub Pages → Run workflow** para lanzar la primera publicación.
+La demo estática está en `rrhh-demo/`. El workflow publica exclusivamente esa carpeta, nunca el backend Python, los modelos, la documentación interna ni los datos locales.
 
-El workflow publica exclusivamente el contenido de `rrhh-demo/`. No publica `main.py`, `FULLAPP.py`, `database.py`, modelos, documentación interna ni datos locales en el sitio web. Esos archivos sí son visibles en el repositorio público.
+Para habilitar la primera publicación:
+
+1. En **Settings → Pages**, selecciona **GitHub Actions** como origen.
+2. En **Settings → Secrets and variables → Actions → Variables**, crea `ENABLE_PAGES` con valor `true`.
+3. Ejecuta **Deploy sanitized Tactical Recruiting demo to GitHub Pages** desde Actions.
+
+La demo usa datos ficticios y almacenamiento local del navegador. No se conecta a la aplicación Python ni a SQLite.
 
 ## Componentes
 
@@ -56,7 +62,7 @@ La aplicación guarda datos localmente en SQLite. El registro modular exige una 
 
 ## Despliegue
 
-El workflow `.github/workflows/pages.yml` publica solo `rrhh-demo/` cuando se activa GitHub Pages para el repositorio. La configuración de Pages debe estar habilitada en Settings → Pages.
+El workflow `.github/workflows/pages.yml` publica solo `rrhh-demo/` cuando Pages está habilitado y la variable `ENABLE_PAGES=true` está configurada. Consulta los pasos de **Demo web pública**.
 
 ## Licencia
 
